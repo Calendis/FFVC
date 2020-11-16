@@ -3,7 +3,7 @@ import os
 from components import bus
 from random import randint
 
-# Get important display registers
+# Get useful magic numbers
 resolution = bus.vid.true_resolution
 colour_bound = bus.vid.colour_bound
 text_bound = bus.vid.text_bound
@@ -78,6 +78,7 @@ def await_input():
             rand_p = bytearray(8)
             for i in range(len(rand_p)):
                 rand_p[i] = randint(0, 255)
+
             bus.io(1, ram_bound + text_bound, rand_p)
             refresh_display()
 
@@ -94,6 +95,7 @@ def await_input():
                 quit()
 
             prog = open(path, 'rb').read()
+            prog = prog[4:]  # Discard the 4-byte header
             bus.processor.process_instructions(prog)
 
         elif x == "showgvram":
@@ -109,24 +111,6 @@ def await_input():
             print(*memcpy)
 
         elif x == "textmode":
-            # Set example text
-            # Encoding is custom, not ASCII
-            '''example = bytearray(8+26)
-            example[0] = 0x4a
-            example[1] = 0x38
-            example[2] = 0x3f
-            example[3] = 0x36
-            example[4] = 0x42
-            example[5] = 0x40
-            example[6] = 0x38
-            example[7] = 0x00
-
-            for i in range(0x34, 0x4e):
-                j = i - 0x34 + 8
-                example[j] = i
-
-            bus.io(1, ram_bound + colour_bound, example)'''
-
             # Set mode byte
             newmode = 1
             bus.io(1, ram_bound + palette_bound, newmode.to_bytes(1, "little"))
@@ -152,7 +136,10 @@ def await_input():
 
 
 def refresh_display():
-    bus.io(1, ram_bound, bus.io(2, ram_bound, mode_bound))
+    print("rd", ram_bound, mode_bound)
+    gvram = bus.io(2, ram_bound, mode_bound)
+    #print(*gvram)
+    bus.io(1, ram_bound, gvram)
 
 
 power_on()

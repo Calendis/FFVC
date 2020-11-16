@@ -53,13 +53,14 @@ class Screen:
         self.palette = bytearray(8)
         self.mode = bytearray(1)
 
+        # Useful magic numbers
         self.colour_bound = 24000
         self.text_bound = 32000
         self.palette_bound = 32008
         self.mode_bound = 32009
 
     def read(self, loc, size):
-        return bus.io(loc + 1000, size)
+        return bus.io(2, loc, size)
 
     def write(self, loc, data):
 
@@ -141,9 +142,11 @@ class Screen:
 
         # Text mode
         elif self.mode[0] == 1:
-            font_header = bus.io(2, 16, 4)
+            font_location_offset = -16
+
+            font_header = bus.io(2, bus.reserved_bytes + font_location_offset, 4)
             font_size = font_header[3]
-            font = bus.io(2, 16, 4 + 9 * font_size)
+            font = bus.io(2, bus.reserved_bytes + font_location_offset, 4 + 9 * font_size)
             font_keys = [font[i+4] for i in range(0, len(font)-4, 9)]
             font_glyphs = [font[i+1 : i+9] for i in range(4, len(font)-1, 9)]
 
@@ -199,7 +202,7 @@ class Screen:
                     gy += 1
                     gx = 0
 
-                self.surface.blit(glyph_surface, (9*x, 0))
+                self.surface.blit(glyph_surface, (8*x, 0))
                 x += 1
 
         else:

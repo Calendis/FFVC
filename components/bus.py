@@ -17,12 +17,15 @@ mem = memory.MemBlock(ram_size, True)
 vid = display.Screen(320, 200, 320, 200)
 snd = None
 
+reserved_bytes = memory.reserved_bytes
+
 
 def bus_msg(status_code, *args):
     status_messages = [
         "Unknown signal",
         "Unmapped address",
-        "Invalid mapping for address"
+        "Invalid mapping for address",
+        "Improper data"
     ]
     if status_code not in range(0, len(status_messages)):
         msg = "Unknown status code"
@@ -33,10 +36,6 @@ def bus_msg(status_code, *args):
 
 
 def io(signal, location, size_or_val):
-
-    if type(location) != int:
-        location = int.from_bytes(location, 'little')
-
     # Make sure location exists in memory map
     if location not in range(min_addr, max_addr):
         bus_msg(1, location)
@@ -46,38 +45,43 @@ def io(signal, location, size_or_val):
     vid_addrs = mapping["vram"]
     snd_addrs = mapping["snd"]
 
-    io_device = None
-    offset = 0
-
     # Read signal
     if signal == 0:
         return int.from_bytes(mem.read(location, size_or_val), "little")
 
     # Write signal
     elif signal == 1:
-        if type(size_or_val) == int:
-            data_size = 1
-        else:
-            data_size = len(size_or_val)
-        if location + data_size in range(mem_addrs[0], mem_addrs[1] + 1):
-            io_device = mem
+
+        write_device = None
+        offset = 0
+
+        # Are we writing to RAM?
+        if location in range(mem_addrs[0], mem_addrs[1] + 1):
+            # write_device = mem
             offset = mem_addrs[0]
 
             # RAM and VRAM overlap
-            if location + data_size in range(vid_addrs[0], vid_addrs[1] + 1):
-                io_device = vid
+            if location in range(vid_addrs[0], vid_addrs[1] + 1):
+                write_device = vid
                 offset = vid_addrs[0]
 
-        elif location + data_size in range(snd_addrs[0], snd_addrs[1] + 1):
-            io_device = snd
+        # Are we writing to the audio controller?
+        elif location in range(snd_addrs[0], snd_addrs[1] + 1):
+            write_device = snd
             offset = snd_addrs[0]
 
         else:
             bus_msg(2, location)
             quit()
 
+        if type(size_or_val) != bytearray and type(size_or_val) != bytes:
+            #bus_msg(3, size_or_val, ", converting...")
+            val_size = max(1, size_or_val.bit_length())
+            size_or_val = size_or_val.to_bytes(val_size, "little")
+
+        if write_device is not None:
+            write_device.write(location - offset, size_or_val)
         mem.write(location, size_or_val)
-        io_device.write(location - offset, size_or_val)
 
     # Read as bytes signal
     elif signal == 2:

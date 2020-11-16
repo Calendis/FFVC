@@ -68,6 +68,11 @@ def processor_msg(status_code, *args):
     Not doing so is UNDEFINED BEHAVIOUR, as the instruction pointer will
     execute from unintended areas, causing either an unknown opcode error or
     strange undefined behaviour.
+    
+    REGISTERS (decimal)
+    -------------------------------------------------------------------
+    OPC register: 9
+    IPT register: 10-11
 '''
 
 
@@ -85,7 +90,7 @@ def process_instructions(program):
 
     # Load program
     processor_msg(4, "loading program...")
-    write_address = 16  # The first 16 bytes are reserved and should not be touched
+    write_address = bus.reserved_bytes  # The first 32 bytes are reserved and should not be touched
     for instruction in program:
         instruction_size = max(1, ceil(instruction.bit_length() / 8))
         instruction_bytes = instruction.to_bytes(instruction_size, 'little')
@@ -93,16 +98,23 @@ def process_instructions(program):
 
         write_address += instruction_size
 
-    processor_msg(4, "loaded program of size", write_address-16)
+    processor_msg(4, "loaded program of size", write_address-bus.reserved_bytes)
 
-    # Set processor registers
-    instruction_pointer = 16
-    opcode = 0
+    # Set IPT register
+    bus.io(1, 10, bus.reserved_bytes)
+    instruction_pointer = bus.io(0, 10, 2)
+
+    # Set OPC register
+    bus.io(1, 9, 0)
+    opcode = bus.io(0, 9, 1)
 
     # Execution of the program occurs in this loop
     # it is the core of this program and handles all the processor opcodes/logic
     processor_msg(4, "running program...")
     while opcode != 5:
+
+        # What's the instruction pointer currently?
+        instruction_pointer = bus.io(0, 10, 2)
 
         # Get the opcode from program memory (one byte)
         opcode = bus.io(0, instruction_pointer, 1)
@@ -308,11 +320,14 @@ def process_instructions(program):
 
             # Normal jump
             if jmp_mode == 0 or jmp_mode == 1:
-                instruction_pointer = a_jmp - parameter_bytes - 1
+                #instruction_pointer = a_jmp - parameter_bytes - 1
+                bus.io(1, 10, a_jmp - parameter_bytes - 1)
 
             # Relative jump
             elif jmp_mode == 2 or jmp_mode == 3:
-                instruction_pointer += a_jmp
+                #instruction_pointer += a_jmp
+                bus.io(1, 10,
+                       bus.io(0, 10, 2) + a_jmp)
 
         # Jump if null
         elif opcode == 8:
@@ -349,11 +364,14 @@ def process_instructions(program):
             if p1 == 0:
                 # Normal jump
                 if jmp_mode == 0 or jmp_mode == 1:
-                    instruction_pointer = a_jmp - parameter_bytes - 1
+                    #instruction_pointer = a_jmp - parameter_bytes - 1
+                    bus.io(1, 10, a_jmp - parameter_bytes - 1)
 
                 # Relative jump
                 elif jmp_mode == 2 or jmp_mode == 3:
-                    instruction_pointer += a_jmp
+                    #instruction_pointer += a_jmp
+                    bus.io(1, 10,
+                           bus.io(0, 10, 2) + a_jmp)
 
         # Jump if equal
         elif opcode == 9:
@@ -403,10 +421,13 @@ def process_instructions(program):
             if p1 == p2:
                 # Normal jump
                 if jmp_mode == 0 or jmp_mode == 1:
-                    instruction_pointer = a_jmp - parameter_bytes - 1
+                    #instruction_pointer = a_jmp - parameter_bytes - 1
+                    bus.io(1, 10, a_jmp - parameter_bytes - 1)
 
                 elif jmp_mode == 2 or jmp_mode == 3:
-                    instruction_pointer += a_jmp
+                    #instruction_pointer += a_jmp
+                    bus.io(1, 10,
+                           bus.io(0, 10, 2) + a_jmp)
 
         # Terminate with error
         elif opcode == 10:
@@ -417,4 +438,6 @@ def process_instructions(program):
             processor_msg(3, opcode, "at", instruction_pointer, "[EXHAUSTED]")
             quit()
 
-        instruction_pointer += 1 + parameter_bytes
+        #instruction_pointer += 1 + parameter_bytes
+        bus.io(1, 10,
+               bus.io(0, 10, 2) + 1 + parameter_bytes)

@@ -1,15 +1,23 @@
 from math import ceil
+
 '''
     Memory block object for VM
-    The first 16 bytes are RESERVED
+    The first 32 bytes are RESERVED
     
     Address   | Slice | Purpose
     ----------------------------------------------
-    0 to 3     | 0:4     | block size
-    4          | 4:5     | write_allowed
-    5 to 9     | 5:10    | earliest writeable address
-    10 to 15   | 10:16   | reserved
+    0 to 3     | 0:4    | block size
+    4 to 8     | 4:9    | earliest writeable address
+    9 to 11    | 9:12   | cpu registers
+        9     OPC
+        10-11 IPT
+    12 to 21   | 12:22  | display registers
+        12-20 palette
+        21    mode
+    22 to 31   | 22:32  | free registers
 '''
+
+reserved_bytes = 32
 
 
 def memory_msg(status_code, *args):
@@ -46,7 +54,9 @@ class MemBlock:
         # Fifth byte stores whether writing is allowed
         self.data[4:5] = write_allowed.to_bytes(1, "little")
 
-        self.set_write_bound(16)
+        # The first nine bytes shouldn't be attempted to be written to
+        # The remaining 23 reserved bytes are registers and can be written to
+        self.set_write_bound(9)
 
     def __getitem__(self, getargs):
 
@@ -74,7 +84,7 @@ class MemBlock:
     def write(self, loc, val):
         # Make sure value is in bytes format
         if type(val) == int:
-            intsize = max(1, ceil(val.bit_length()/8))
+            intsize = max(1, ceil(val.bit_length() / 8))
             val = val.to_bytes(intsize, 'little')
 
         # Determine size of data to write

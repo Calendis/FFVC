@@ -1,0 +1,52 @@
+Specifications for translating FVCAL (Fun Virtual Computer Assembly Language) into FVC machine code:
+
+Parameters are values/address as normal, but they also support certain keywords.
+See processor.py for documentation on specific instructions and parameters.
+
+KEYWORD           | ADDRESS | SIZE (bytes)
+------------------------------------------
+OPC               | $09 00  | 1
+IPT               | $0A 00  | 2
+PAL               | $0C 00  | 8
+MOD               | $15 00  | 1
+                  |         |
+                  |         |
+                  |         |
+                  |         |
+                  |         |
+                  |         |
+                  |         |
+                  |         |
+                  |         |
+                  |         |
+
+
+Assembly          | Machine code
+----------------------------------------
+ADD               | $01
+MULT              | $02
+COPY              | $03
+MOVE              | $04
+JUMP              | $07
+JMPNUL            | $08
+JMPEQL            | $09
+ERR               | $0A
+PRINT             | $03 00 00 ??00 A861
+                  |
+                  |
+                  |
+                  |
+                  |
+                  |
+                  |
+                  |
+                  |
+                  |
+                  |
+                  |
+                  |
+                  |
+
+Compiled executables should have a four-byte header:
+0x39 0x49 0x36, followed by the version of the compiler used to compile.
+In FTE, the header signature reads 'FVC', but in ASCII, it reads '9I6'
