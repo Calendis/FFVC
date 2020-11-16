@@ -142,7 +142,7 @@ class Screen:
 
         # Text mode
         elif self.mode[0] == 1:
-            font_location_offset = -16
+            font_location_offset = 0
 
             font_header = bus.io(2, bus.reserved_bytes + font_location_offset, 4)
             font_size = font_header[3]
@@ -202,7 +202,8 @@ class Screen:
                     gy += 1
                     gx = 0
 
-                self.surface.blit(glyph_surface, (8*x, 0))
+                y = bus.io(0, 22, 1)
+                self.surface.blit(glyph_surface, (8*x, 8*y))
                 x += 1
 
         else:

@@ -14,7 +14,8 @@ from math import ceil
     12 to 21   | 12:22  | display registers
         12-20 palette
         21    mode
-    22 to 31   | 22:32  | free registers
+        22    line
+    23 to 31   | 23:32  | free registers
 '''
 
 reserved_bytes = 32

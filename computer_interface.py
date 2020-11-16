@@ -16,7 +16,8 @@ ram_bound = bus.mapping["vram"][0]
 def bios_msg(status_code, *args):
     status_messages = [
         "Booting...",
-        "File not found"
+        "File not found",
+        "Bad header"
     ]
 
     if status_code not in range(0, len(status_messages)):
@@ -95,6 +96,11 @@ def await_input():
                 quit()
 
             prog = open(path, 'rb').read()
+            header = prog[:4]
+            if header[:3].decode("ASCII", "ignore") != "9I6":
+                bios_msg(2, *header)
+                quit()
+
             prog = prog[4:]  # Discard the 4-byte header
             bus.processor.process_instructions(prog)
 
@@ -110,6 +116,10 @@ def await_input():
             memcpy = bus.io(2, 0, ram_bound)
             print(*memcpy)
 
+        elif x == "showpal":
+            memcpy = bus.io(2, palette_bound-8+ram_bound, 8)
+            print(*memcpy)
+
         elif x == "textmode":
             # Set mode byte
             newmode = 1
@@ -122,11 +132,11 @@ def await_input():
         elif x == "loadfont":
             # Load font into RAM
             font = open("files/test_font.bgt", 'rb').read()
-            bus.io(1, 16, font)
+            bus.io(1, 32, font)
 
         elif x == "clearram":
-            # Clear program memory, but not the first 16 bytes of ram, or VRAM
-            bus.io(1, 16, bytes(999-16))
+            # Clear program memory, but not the first 32 bytes of ram, or VRAM
+            bus.io(1, 32, bytes(999-32))
 
         elif x == "quit":
             quit()
@@ -136,9 +146,7 @@ def await_input():
 
 
 def refresh_display():
-    print("rd", ram_bound, mode_bound)
     gvram = bus.io(2, ram_bound, mode_bound)
-    #print(*gvram)
     bus.io(1, ram_bound, gvram)
 
 
