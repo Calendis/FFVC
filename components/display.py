@@ -163,6 +163,7 @@ class Screen:
 
             glyph_surface = pygame.Surface((8, 8))
             x = 0
+            chars_per_line = self.true_resolution[0] // 8
             for c in text_data:
                 try:
                     glyph = fontmap[c]
@@ -206,8 +207,18 @@ class Screen:
                 self.surface.blit(glyph_surface, (8*x, 8*y))
                 x += 1
 
+                # If we have reached the end of the line...
+                if x > chars_per_line:
+                    # Increment the line register and reset the x pos
+                    bus.io(1, 22, y + 1)
+                    x = 0
+
+                # Wrap the line register
+                if 8*y > self.true_resolution[1]:
+                    y = 0
+
         else:
-            display_msg(1)
+            display_msg(1, self.mode)
             quit()
 
         pygame.display.flip()

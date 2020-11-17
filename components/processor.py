@@ -167,6 +167,9 @@ def process_instructions(program):
                 processor_msg(10, o_mode)
                 quit()
 
+            result = p1 + p2
+
+
         # Multiply
         elif opcode == 2:
             i_mode = bus.io(0, instruction_pointer+1, 1)
@@ -235,6 +238,7 @@ def process_instructions(program):
             else:
                 processor_msg(10, o_mode)
                 quit()
+
 
         # Move
         elif opcode == 4:

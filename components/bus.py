@@ -1,4 +1,5 @@
 from components import memory, display, processor
+from math import ceil
 
 # ALL RANGES ARE INCLUSIVE
 mapping = {
@@ -57,7 +58,6 @@ def io(signal, location, size_or_val):
 
         # Are we writing to RAM?
         if location in range(mem_addrs[0], mem_addrs[1] + 1):
-            # write_device = mem
             offset = mem_addrs[0]
 
             # RAM and VRAM overlap
@@ -76,8 +76,10 @@ def io(signal, location, size_or_val):
 
         if type(size_or_val) != bytearray and type(size_or_val) != bytes:
             #bus_msg(3, size_or_val, ", converting...")
-            val_size = max(1, size_or_val.bit_length())
+            val_size = max(1, ceil(size_or_val.bit_length() / 8))
+            #print("sov", size_or_val, '[', size_or_val.bit_length(), ']')
             size_or_val = size_or_val.to_bytes(val_size, "little")
+            #print("vs", val_size)
 
         if write_device is not None:
             write_device.write(location - offset, size_or_val)
