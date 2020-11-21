@@ -1,4 +1,5 @@
 from components import bus
+
 # Display driver for For Fun Virtual Computer
 '''
 VM Display Specifications:
@@ -147,8 +148,8 @@ class Screen:
             font_header = bus.io(2, bus.reserved_bytes + font_location_offset, 4)
             font_size = font_header[3]
             font = bus.io(2, bus.reserved_bytes + font_location_offset, 4 + 9 * font_size)
-            font_keys = [font[i+4] for i in range(0, len(font)-4, 9)]
-            font_glyphs = [font[i+1 : i+9] for i in range(4, len(font)-1, 9)]
+            font_keys = [font[i + 4] for i in range(0, len(font) - 4, 9)]
+            font_glyphs = [font[i + 1: i + 9] for i in range(4, len(font) - 1, 9)]
 
             # Assemble the key-glyph font mapping
             fontmap = {}
@@ -162,25 +163,49 @@ class Screen:
             text_data = bus.io(2, 1000 + self.colour_bound, 4000)
 
             glyph_surface = pygame.Surface((8, 8))
-            x = 0
             chars_per_line = self.true_resolution[0] // 8
+            chars_per_column = self.true_resolution[1] // 8
+
+            x = 0
+            # Iterate over each character ID
             for c in text_data:
-                try:
-                    glyph = fontmap[c]
+                # Catch control characters
 
-                except KeyError:
-                    glyph = fontmap[0x00]
+                # Null
+                if c == 0x00:
+                    continue
 
-                glyph_bitstring_rows = []
+                # Newline
+                elif c == 0x05:
+                    bus.io(1, 22, y + 1)
+                    continue
 
-                for glyph_row in glyph:
-                    row_bitstring = format(glyph_row, 'b')
-                    prefix = '0'*(8 - len(row_bitstring))
-                    row_bitstring = prefix + row_bitstring
-                    glyph_bitstring_rows.append(row_bitstring)
+                # Home
+                elif c == 0x0e:
+                    bus.io(1, 22, 0)
+                    continue
 
                 gx = 0
                 gy = 0
+                y = bus.io(0, 22, 1)
+
+                # Make sure the loaded font supports the current character
+                try:
+                    glyph = fontmap[c]
+
+                # Fall back to the 0x00 char if char is unsupported
+                except KeyError:
+                    glyph = fontmap[0x00]
+
+                # Convert glyph data into an array of bits
+                glyph_bitstring_rows = []
+                for glyph_row in glyph:
+                    row_bitstring = format(glyph_row, 'b')
+                    prefix = '0' * (8 - len(row_bitstring))
+                    row_bitstring = prefix + row_bitstring
+                    glyph_bitstring_rows.append(row_bitstring)
+
+                # Render each array of bits onto a pygame surface
                 for glyph_bs_row in glyph_bitstring_rows:
                     for bit in glyph_bs_row:
                         c = self.palette[int(bit)]
@@ -197,25 +222,26 @@ class Screen:
                         g *= 32
                         b *= 64
 
+                        # Render a single pixel by drawing a line from one point to the same point
                         pygame.draw.line(glyph_surface, (r, g, b), (gx, gy), (gx, gy))
                         gx += 1
 
                     gy += 1
                     gx = 0
 
-                y = bus.io(0, 22, 1)
-                self.surface.blit(glyph_surface, (8*x, 8*y))
+                self.surface.blit(glyph_surface, (8 * x, 8 * y))
                 x += 1
 
                 # If we have reached the end of the line...
-                if x > chars_per_line:
+                if x >= chars_per_line:
                     # Increment the line register and reset the x pos
                     bus.io(1, 22, y + 1)
                     x = 0
 
-                # Wrap the line register
-                if 8*y > self.true_resolution[1]:
-                    y = 0
+                # Wrap the line register if we try to draw text beyond the bottom of the screen
+                if y >= chars_per_column and False:
+                    print("Wrapping y:", y, '/', chars_per_column)
+                    bus.io(1, 22, 0)
 
         else:
             display_msg(1, self.mode)
