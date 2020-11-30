@@ -36,8 +36,8 @@ def processor_msg(status_code, *args):
     "p", and "out" paramaters are two bytes
     ----------------------------------------------------------------
     0: NO-OP {}
-    1: ADD {i_mode, o_mode, p1, p2, a_out}
-    2: MULT {i_mode, o_mode, p1, p2, a_out}
+    1: ADD {p1_mode, p2_mode, o_mode, p1, p2, a_out}
+    2: MULT {p1_mode, p2_mode, o_mode, p1, p2, a_out}
     3: CPY {i_mode, o_mode, p1, a_out}
     4: MOV {i_mode, o_mode, p1, a_out}
     5: TERMINATE SUCCESSFULLY
@@ -80,7 +80,7 @@ def process_instructions(program):
 
     opcode_parameter_lengths = [
         0,  # no-op
-        8, 8,  # add, mult
+        9, 9,  # add, mult
         6, 6,  # cpy, mov
         -1,  # term success
         3,  # display
@@ -133,33 +133,45 @@ def process_instructions(program):
 
         # Add
         elif opcode == 1:
-            i_mode = bus.io(0, instruction_pointer+1, 1)
-            o_mode = bus.io(0, instruction_pointer+2, 1)
 
-            # Direct mode
-            if i_mode == 0:
-                p1 = bus.io(0, instruction_pointer+3, 2)
-                p2 = bus.io(0, instruction_pointer+5, 2)
+            p1_mode = bus.io(0, instruction_pointer+1, 1)
+            p2_mode = bus.io(0, instruction_pointer+2, 1)
+            o_mode = bus.io(0, instruction_pointer+3, 1)
 
-            # Pointer mode
-            elif i_mode == 1:
-                a_p1 = bus.io(0, instruction_pointer+3, 2)
-                a_p2 = bus.io(0, instruction_pointer+5, 2)
+            # Direct p1 mode
+            if p1_mode == 0:
+                p1 = bus.io(0, instruction_pointer+4, 2)
+
+            # Pointer p1 mode
+            elif p1_mode == 1:
+                a_p1 = bus.io(0, instruction_pointer+4, 2)
                 p1 = bus.io(0, a_p1, 2)
+
+            else:
+                processor_msg(9, o_mode)
+                quit()
+
+            # Direct p2 mode
+            if p2_mode == 0:
+                p2 = bus.io(0, instruction_pointer + 6, 2)
+
+            # Pointer p2 mode
+            elif p2_mode == 1:
+                a_p2 = bus.io(0, instruction_pointer + 6, 2)
                 p2 = bus.io(0, a_p2, 2)
 
             else:
-                processor_msg(9, i_mode)
+                processor_msg(9, o_mode)
                 quit()
 
             # Direct output
             if o_mode == 0:
-                out = bus.io(0, instruction_pointer+7, 2)
+                out = bus.io(0, instruction_pointer+8, 2)
                 bus.io(1, out, p1 + p2)
 
             # Pointer output
             elif o_mode == 1:
-                a_out = bus.io(0, instruction_pointer+7, 2)
+                a_out = bus.io(0, instruction_pointer+8, 2)
                 out = bus.io(0, a_out, 2)
                 bus.io(1, out, p1 + p2)
 
@@ -167,38 +179,46 @@ def process_instructions(program):
                 processor_msg(10, o_mode)
                 quit()
 
-            result = p1 + p2
-
-
         # Multiply
         elif opcode == 2:
-            i_mode = bus.io(0, instruction_pointer+1, 1)
-            o_mode = bus.io(0, instruction_pointer+2, 1)
+            p1_mode = bus.io(0, instruction_pointer + 1, 1)
+            p2_mode = bus.io(0, instruction_pointer + 2, 1)
+            o_mode = bus.io(0, instruction_pointer + 3, 1)
 
-            # Direct mode
-            if i_mode == 0:
-                p1 = bus.io(0, instruction_pointer+3, 2)
-                p2 = bus.io(0, instruction_pointer+5, 2)
+            # Direct p1 mode
+            if p1_mode == 0:
+                p1 = bus.io(0, instruction_pointer + 4, 2)
 
-            # Pointer mode
-            elif i_mode == 1:
-                a_p1 = bus.io(0, instruction_pointer+3, 2)
-                a_p2 = bus.io(0, instruction_pointer+5, 2)
+            # Pointer p1 mode
+            elif p1_mode == 1:
+                a_p1 = bus.io(0, instruction_pointer + 4, 2)
                 p1 = bus.io(0, a_p1, 2)
+
+            else:
+                processor_msg(9, o_mode)
+                quit()
+
+            # Direct p2 mode
+            if p2_mode == 0:
+                p2 = bus.io(0, instruction_pointer + 6, 2)
+
+            # Pointer p2 mode
+            elif p2_mode == 1:
+                a_p2 = bus.io(0, instruction_pointer + 6, 2)
                 p2 = bus.io(0, a_p2, 2)
 
             else:
-                processor_msg(9, i_mode)
+                processor_msg(9, o_mode)
                 quit()
 
             # Direct output
             if o_mode == 0:
-                out = bus.io(0, instruction_pointer+7, 2)
+                out = bus.io(0, instruction_pointer + 8, 2)
                 bus.io(1, out, p1 * p2)
 
             # Pointer output
             elif o_mode == 1:
-                a_out = bus.io(0, instruction_pointer+7, 2)
+                a_out = bus.io(0, instruction_pointer + 8, 2)
                 out = bus.io(0, a_out, 2)
                 bus.io(1, out, p1 * p2)
 

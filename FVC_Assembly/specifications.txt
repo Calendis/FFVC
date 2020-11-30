@@ -3,6 +3,7 @@ Specifications for translating FVCAL (Fun Virtual Computer Assembly Language) in
 Parameters are values/address as normal, but they also support certain keywords.
 See processor.py for documentation on specific instructions and parameters.
 
+(Addresses listed as little-endian)
 KEYWORD           | ADDRESS | SIZE (bytes)
 ------------------------------------------
 OPC               | $09 00  | 1
@@ -27,6 +28,8 @@ ADD               | $01
 MULT              | $02
 COPY              | $03
 MOVE              | $04
+DONE              | $05
+META              | $06
 JUMP              | $07
 JMPNUL            | $08
 JMPEQL            | $09
@@ -50,3 +53,18 @@ PRINT             | $03 00 00 ??00 A861
 Compiled executables should have a four-byte header:
 0x39 0x49 0x36, followed by the version of the compiler used to compile.
 In FTE, the header signature reads 'FVC', but in ASCII, it reads '9I6'
+
+PROGRAMMING:
+Line numbers must prefix each line. They can be any non-negative integer, but they must be in order from lowest to
+highest.
+
+Each line must either be blank (ignored by the assembler), or contain a line number, an operator, and a number of
+parameters. Parameters can either be an ptr/double ptr, in which case they are prefixed with '$', a literal/ptr, in
+which case they are prefixed with '#', or a string, in which case they are prefixed with '. Mode parameters are INFERRED
+by the assembler using the '$' and '#' symbols.
+
+eg.
+Useless program: (adds some numbers, prints, and then sets an invalid opcode)
+0  ADD  $D01D $00A0 #F800
+5  PRINT 'TEST!
+10 COPY #0100 #OPC
