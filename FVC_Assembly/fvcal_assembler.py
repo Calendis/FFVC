@@ -66,6 +66,8 @@ keyword_params_bytecode = {
     "MOD": bytearray([0x15, 0x00]),
 }
 
+comment_char = '/'
+
 
 def compile_fvcal(assembly, out_path):
     start_time = time()
@@ -81,6 +83,12 @@ def compile_fvcal(assembly, out_path):
             s_line = line.split()
 
             number = s_line[0]
+
+            # Exempt comments from validation
+            if number == comment_char:
+                number = last_number
+                continue
+
             op = s_line[1]
             params = s_line[2:]
 
@@ -97,8 +105,11 @@ def compile_fvcal(assembly, out_path):
             continue
 
         s_line = line.split()
+        # Ignore commented lines
+        if s_line[0] == '/':
+            continue
 
-        number = s_line[0]
+        # number = s_line[0]
         op = s_line[1]
         params = s_line[2:]
 
@@ -114,6 +125,7 @@ def compile_fvcal(assembly, out_path):
             '%': 0x02,
             '^': 0x03
         }
+
         # Determine modes from prefixes
         mode_count = ops_params_bytecode[op][2]
         mode_prefixes = []
@@ -157,7 +169,7 @@ def compile_fvcal(assembly, out_path):
     end_time = time()
     elapsed = round(end_time - start_time, 3)
 
-    print(*assembled_program)
+    #print(*assembled_program)
     print("Compilation finished in", elapsed, "seconds")
 
 

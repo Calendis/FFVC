@@ -61,10 +61,12 @@ highest.
 Each line must either be blank (ignored by the assembler), or contain a line number, an operator, and a number of
 parameters. Parameters can either be an ptr/double ptr, in which case they are prefixed with '$', a literal/ptr, in
 which case they are prefixed with '#', or a string, in which case they are prefixed with '. Mode parameters are INFERRED
-by the assembler using the '$' and '#' symbols.
+by the assembler using the '$' and '#' symbols. Comments do not have a line number and start with a single forward
+slash.
 
 eg.
 Useless program: (adds some numbers, prints, and then sets an invalid opcode)
 0  ADD  $D01D $00A0 #F800
 5  PRINT 'TEST!
+/ this is a comment
 10 COPY #0100 #OPC

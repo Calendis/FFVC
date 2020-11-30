@@ -344,12 +344,10 @@ def process_instructions(program):
 
             # Normal jump
             if jmp_mode == 0 or jmp_mode == 1:
-                #instruction_pointer = a_jmp - parameter_bytes - 1
                 bus.io(1, 10, a_jmp - parameter_bytes - 1)
 
             # Relative jump
             elif jmp_mode == 2 or jmp_mode == 3:
-                #instruction_pointer += a_jmp
                 bus.io(1, 10,
                        bus.io(0, 10, 2) + a_jmp)
 
