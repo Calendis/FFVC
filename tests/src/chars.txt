@@ -1,0 +1,25 @@
+/ Program to print out entire character set
+
+/ 25000 is the start of text video ram
+0  COPY #25000 #190
+
+/ This address will represent our current character
+10 COPY #0 #200
+
+/ Write the current character value to memory
+20 COPY $200 $190
+
+/ Increment the two values
+30 ADD #1 $190 #190
+40 ADD #1 $200 #200
+
+/ Increment the palette for fun
+45 ADD #1 $PAL #PAL
+
+/ If done, jump ahead
+50 JMPEQL %4 $200 #255
+
+/ Else, jump to beginning of program
+60 JMP    #46
+
+70 DONE
