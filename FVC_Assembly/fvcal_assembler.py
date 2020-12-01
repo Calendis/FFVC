@@ -56,7 +56,7 @@ ops_params_bytecode = {
     "JMPNUL": [2, 0x08, 2],
     "JMPEQL": [3, 0x09, 3],
     "ERR": [0, 0x0A, 0],
-    "PRINT": [1, 0x03, 2]
+    "PRINT": [1, 0x03, 1]
 }
 
 keyword_params_bytecode = {
@@ -64,6 +64,71 @@ keyword_params_bytecode = {
     "IPT": bytearray([0x0A, 0x00]),
     "PAL": bytearray([0x0C, 0x00]),
     "MOD": bytearray([0x15, 0x00]),
+}
+
+FVCTE_table = {
+    '0': 0x10,
+    '1': 0x11,
+    '2': 0x12,
+    '3': 0x13,
+    '4': 0x14,
+    '5': 0x15,
+    '6': 0x16,
+    '7': 0x17,
+    '8': 0x18,
+    '9': 0x19,
+    'a': 0x1a,
+    'b': 0x1b,
+    'c': 0x1c,
+    'd': 0x1d,
+    'e': 0x1e,
+    'f': 0x1f,
+    'g': 0x20,
+    'h': 0x21,
+    'i': 0x22,
+    'j': 0x23,
+    'k': 0x24,
+    'l': 0x25,
+    'm': 0x26,
+    'n': 0x27,
+    'o': 0x28,
+    'p': 0x29,
+    'q': 0x2a,
+    'r': 0x2b,
+    's': 0x2c,
+    't': 0x2d,
+    'u': 0x2e,
+    'v': 0x2f,
+    'w': 0x30,
+    'x': 0x31,
+    'y': 0x32,
+    'z': 0x33,
+    'A': 0x34,
+    'B': 0x35,
+    'C': 0x36,
+    'D': 0x37,
+    'E': 0x38,
+    'F': 0x39,
+    'G': 0x3a,
+    'H': 0x3b,
+    'I': 0x3c,
+    'J': 0x3d,
+    'K': 0x3e,
+    'L': 0x3f,
+    'M': 0x40,
+    'N': 0x41,
+    'O': 0x42,
+    'P': 0x43,
+    'Q': 0x44,
+    'R': 0x45,
+    'S': 0x46,
+    'T': 0x47,
+    'U': 0x48,
+    'V': 0x49,
+    'W': 0x4a,
+    'X': 0x4b,
+    'Y': 0x4c,
+    'Z': 0x4d,
 }
 
 comment_char = '/'
@@ -115,10 +180,6 @@ def compile_fvcal(assembly, out_path):
 
         op_byte = bytearray([ops_params_bytecode[op][1]])
 
-        # Handle special operators that don't have a direct machine code equivalent
-        if op == "PRINT":
-            pass
-
         prefix_to_byte = {
             '#': 0x00,
             '$': 0x01,
@@ -126,41 +187,69 @@ def compile_fvcal(assembly, out_path):
             '^': 0x03
         }
 
-        # Determine modes from prefixes
-        mode_count = ops_params_bytecode[op][2]
-        mode_prefixes = []
-        for mode_param_i in range(mode_count):
-            mode_prefixes.append(params[mode_param_i][0])
+        # Handle operators that must be expanded to machine code
+        if op == "PRINT":
+            expanded_bytes = bytearray()
+            strlen = len(params[0]) - 1
 
-        # Assemble list of 8-bit modes
-        modes = [prefix_to_byte[p] for p in mode_prefixes]
+            for i in range(strlen):
+                current_letter = params[0][i+1]
+                # Each letter needs a copy instruction
+                expanded_bytes.append(0x03)
 
-        # Assemble parameters with their respective modes into bytes
-        param_bytes = bytearray()
-        modes_inserted = 0
+                # The copy mode is direct
+                expanded_bytes.append(0x00)
+                expanded_bytes.append(0x00)
 
-        # First, insert the parameter mode arguments
-        for param in params:
-            while modes_inserted < mode_count:
-                param_bytes.append(modes[modes_inserted])
-                modes_inserted += 1
+                # What letter are we writing?
+                expanded_bytes.append(FVCTE_table[current_letter])
+                expanded_bytes.append(0x00)
 
-            no_prefix_param = param[1:]
+                # To where?
+                expanded_bytes.append(0xA8 + i)
+                expanded_bytes.append(0x61)
 
-            # Handle conversion of keyword params to numbers
-            if no_prefix_param in list(keyword_params_bytecode.keys()):
-                no_prefix_param = keyword_params_bytecode[no_prefix_param]
+            machine_code += expanded_bytes
 
-            # Handle conversion of normal params to numbers
-            else:
-                no_prefix_param = int(no_prefix_param)
-                no_prefix_param = no_prefix_param.to_bytes(2, "little")
+        # Handle all other operators
+        else:
+            # Determine modes from prefixes
+            mode_count = ops_params_bytecode[op][2]
+            mode_prefixes = []
+            for mode_param_i in range(mode_count):
+                mode_prefixes.append(params[mode_param_i][0])
 
-            param_bytes += no_prefix_param
+            # Assemble list of 8-bit modes
+            modes = [prefix_to_byte[p] for p in mode_prefixes]
 
-        instruction_bytes = op_byte + param_bytes
-        machine_code += instruction_bytes
+            # Assemble parameters with their respective modes into bytes
+            param_bytes = bytearray()
+            modes_inserted = 0
 
+            # First, insert the parameter mode arguments
+            for param in params:
+                while modes_inserted < mode_count:
+                    param_bytes.append(modes[modes_inserted])
+                    modes_inserted += 1
+
+                no_prefix_param = param[1:]
+
+                # Handle conversion of keyword params to numbers
+                if no_prefix_param in list(keyword_params_bytecode.keys()):
+                    no_prefix_param = keyword_params_bytecode[no_prefix_param]
+
+                # Handle conversion of normal params to numbers
+                else:
+                    no_prefix_param = int(no_prefix_param)
+                    no_prefix_param = no_prefix_param.to_bytes(2, "little")
+
+                param_bytes += no_prefix_param
+
+            # Store the assembled machine code
+            instruction_bytes = op_byte + param_bytes
+            machine_code += instruction_bytes
+
+    # Write the assembled binary to disk
     assembled_program = HEADER + machine_code
     out_file = open(out_path, 'wb')
     out_file.write(assembled_program)
@@ -169,7 +258,7 @@ def compile_fvcal(assembly, out_path):
     end_time = time()
     elapsed = round(end_time - start_time, 3)
 
-    #print(*assembled_program)
+    # print(*assembled_program)
     print("Compilation finished in", elapsed, "seconds")
 
 

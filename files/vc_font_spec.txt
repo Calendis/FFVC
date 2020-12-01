@@ -38,6 +38,7 @@ This format is called .bgt, for bit-glyph table
 It can be raw, or compressed with RLE
 
 
+The text standard is called FVCTE (Fun Virtual Computer Text Encoding)
 The 255 characters are
 ------------------------
 0x00 - nul
