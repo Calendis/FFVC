@@ -46,6 +46,7 @@ def processor_msg(status_code, *args):
     8: JMP if nul {a_dest_mode, p1_mode, a_dest, p1}
     9: JMP if eql {a_dest_mode, p1_mode, p2_mode, a_dest, p1, p2},
     10: TERMINATE WITH ERROR
+    11: CPYBLK {i_mode, o_mode, size, p1, a_out}
     
     PARAMETER MODES
     -----------------------------------------------------------------
@@ -85,7 +86,8 @@ def process_instructions(program):
         -1,  # term success
         3,  # display
         3, 6, 9,  # jmp, jmpnul, jmpeql
-        -1  # term error
+        -1,  # term error
+        7  # cpyblk
     ]
 
     # Load program
@@ -455,6 +457,42 @@ def process_instructions(program):
         elif opcode == 10:
             processor_msg(11)
             opcode = 5
+
+        # Copy block
+        elif opcode == 11:
+            i_mode = bus.io(0, instruction_pointer + 1, 1)
+            o_mode = bus.io(0, instruction_pointer + 2, 1)
+            size = bus.io(0, instruction_pointer + 3, 1)
+
+            # Direct mode
+            if i_mode == 0:
+                a_p1 = bus.io(0, instruction_pointer + 4, 2)
+                p1 = bus.io(0, a_p1, size)
+
+            # Pointer mode
+            elif i_mode == 1:
+                aa_p1 = bus.io(0, instruction_pointer + 4, 2)
+                a_p1 = bus.io(0, a_p1, 2)
+                p1 = bus.io(a_p1, size)
+
+            else:
+                processor_msg(9, i_mode)
+                quit()
+
+            # Direct output mode
+            if o_mode == 0:
+                out = bus.io(0, instruction_pointer + 6, 2)
+                bus.io(1, out, p1)
+
+            # Pointer output mode
+            elif o_mode == 1:
+                a_out = bus.io(0, instruction_pointer + 6, 2)
+                out = bus.io(0, a_out, 2)
+                bus.io(1, out, p1)
+
+            else:
+                processor_msg(10, o_mode)
+                quit()
 
         else:
             processor_msg(3, opcode, "at", instruction_pointer, "[EXHAUSTED]")

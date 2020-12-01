@@ -56,7 +56,8 @@ ops_params_bytecode = {
     "JMPNUL": [2, 0x08, 2],
     "JMPEQL": [3, 0x09, 3],
     "ERR": [0, 0x0A, 0],
-    "PRINT": [1, 0x03, 1]
+    "PRINT": [1, 0x03, 1],
+    "CPYBLK": [2, 0x0B, 3]
 }
 
 keyword_params_bytecode = {
@@ -192,22 +193,32 @@ def compile_fvcal(assembly, out_path):
             expanded_bytes = bytearray()
             strlen = len(params[0]) - 1
 
+            # First, we insert a jump ahead
+            # This allows us to store some text data in the binary
+            expanded_bytes.append(0x07)
+            expanded_bytes.append(0x02)
+            expanded_bytes.append(strlen)
+            expanded_bytes.append(0x00)
+
+            # Store the text data
             for i in range(strlen):
                 current_letter = params[0][i+1]
-                # Each letter needs a copy instruction
-                expanded_bytes.append(0x03)
-
-                # The copy mode is direct
-                expanded_bytes.append(0x00)
-                expanded_bytes.append(0x00)
-
-                # What letter are we writing?
                 expanded_bytes.append(FVCTE_table[current_letter])
-                expanded_bytes.append(0x00)
 
-                # To where?
-                expanded_bytes.append(0xA8 + i)
-                expanded_bytes.append(0x61)
+            # Insert a cpyblk to copy the text data into VRAM
+            expanded_bytes.append(0x0B)
+            expanded_bytes.append(0x00)
+            expanded_bytes.append(0x00)
+            expanded_bytes.append(strlen)
+
+            # Calculate the address where the text data is stored in the binary
+            current_address = len(machine_code) + len(expanded_bytes) + 28 - strlen
+            current_address_b = current_address.to_bytes(2, 'little')
+            expanded_bytes += current_address_b
+
+            # The cpyblk instruction will write to the text portion of VRAM
+            expanded_bytes.append(0xA8)
+            expanded_bytes.append(0x61)
 
             machine_code += expanded_bytes
 

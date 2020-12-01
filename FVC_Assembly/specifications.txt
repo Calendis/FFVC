@@ -35,7 +35,7 @@ JMPNUL            | $08
 JMPEQL            | $09
 ERR               | $0A
 PRINT             | $03 00 00 ??00 A861
-                  |
+CPYBLK            | $0B
                   |
                   |
                   |
