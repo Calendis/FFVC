@@ -19,7 +19,6 @@
 40 PRINT  #308
 45 PRINT  #306
 46 PRINT  #302
-47 PRINT 'A
 
 / Increment $300
 50 ADD    #1 $300 #300

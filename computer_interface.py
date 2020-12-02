@@ -81,7 +81,7 @@ def await_input():
                 rand_p[i] = randint(0, 255)
 
             bus.io(1, ram_bound + text_bound, rand_p)
-            refresh_display()
+            #refresh_display()
 
         elif x == "testimg":
             test_image = bytearray(colour_bound)
@@ -143,6 +143,8 @@ def await_input():
 
         else:
             print("unknown command")
+
+        refresh_display()
 
 
 def refresh_display():

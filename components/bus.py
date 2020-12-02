@@ -75,11 +75,8 @@ def io(signal, location, size_or_val):
             quit()
 
         if type(size_or_val) != bytearray and type(size_or_val) != bytes:
-            #bus_msg(3, size_or_val, ", converting...")
             val_size = max(1, ceil(size_or_val.bit_length() / 8))
-            #print("sov", size_or_val, '[', size_or_val.bit_length(), ']')
             size_or_val = size_or_val.to_bytes(val_size, "little")
-            #print("vs", val_size)
 
         if write_device is not None:
             write_device.write(location - offset, size_or_val)

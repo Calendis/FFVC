@@ -171,7 +171,6 @@ class Screen:
             # Iterate over each character ID
             for c in text_data:
                 # Catch control characters
-
                 # Null
                 if c == 0x00:
                     continue
