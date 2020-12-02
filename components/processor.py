@@ -47,6 +47,9 @@ def processor_msg(status_code, *args):
     9: JMP if eql {a_dest_mode, p1_mode, p2_mode, a_dest, p1, p2},
     10: TERMINATE WITH ERROR
     11: CPYBLK {i_mode, o_mode, size, p1, a_out}
+    12: MOVBLK {i_mode, o_mode, size, p1, a_out}
+    13: MOD {p1_mode, p2_mode, o_mode, p1, p2, a_out}
+    14: DIV {p1_mode, p2_mode, o_mode, p1, p2, a_out}
     
     PARAMETER MODES
     -----------------------------------------------------------------
@@ -87,7 +90,8 @@ def process_instructions(program):
         3,  # display
         3, 6, 9,  # jmp, jmpnul, jmpeql
         -1,  # term error
-        7  # cpyblk
+        7, 7, # cpyblk, movblk
+        9, 9 # mod, div
     ]
 
     # Load program
@@ -135,7 +139,6 @@ def process_instructions(program):
 
         # Add
         elif opcode == 1:
-
             p1_mode = bus.io(0, instruction_pointer+1, 1)
             p2_mode = bus.io(0, instruction_pointer+2, 1)
             o_mode = bus.io(0, instruction_pointer+3, 1)
@@ -472,8 +475,8 @@ def process_instructions(program):
             # Pointer mode
             elif i_mode == 1:
                 aa_p1 = bus.io(0, instruction_pointer + 4, 2)
-                a_p1 = bus.io(0, a_p1, 2)
-                p1 = bus.io(a_p1, size)
+                a_p1 = bus.io(0, aa_p1, 2)
+                p1 = bus.io(0, a_p1, size)
 
             else:
                 processor_msg(9, i_mode)
@@ -489,6 +492,105 @@ def process_instructions(program):
                 a_out = bus.io(0, instruction_pointer + 6, 2)
                 out = bus.io(0, a_out, 2)
                 bus.io(1, out, p1)
+
+            else:
+                processor_msg(10, o_mode)
+                quit()
+
+        # Move block
+        elif opcode == 12:
+            print("MOVEBLK UNIMPLEMENTED")
+            pass
+
+        # Modulo
+        elif opcode == 13:
+            p1_mode = bus.io(0, instruction_pointer + 1, 1)
+            p2_mode = bus.io(0, instruction_pointer + 2, 1)
+            o_mode = bus.io(0, instruction_pointer + 3, 1)
+
+            # Direct p1 mode
+            if p1_mode == 0:
+                p1 = bus.io(0, instruction_pointer + 4, 2)
+
+            # Pointer p1 mode
+            elif p1_mode == 1:
+                a_p1 = bus.io(0, instruction_pointer + 4, 2)
+                p1 = bus.io(0, a_p1, 2)
+
+            else:
+                processor_msg(9, o_mode)
+                quit()
+
+            # Direct p2 mode
+            if p2_mode == 0:
+                p2 = bus.io(0, instruction_pointer + 6, 2)
+
+            # Pointer p2 mode
+            elif p2_mode == 1:
+                a_p2 = bus.io(0, instruction_pointer + 6, 2)
+                p2 = bus.io(0, a_p2, 2)
+
+            else:
+                processor_msg(9, o_mode)
+                quit()
+
+            # Direct output
+            if o_mode == 0:
+                out = bus.io(0, instruction_pointer + 8, 2)
+                bus.io(1, out, p1 % p2)
+
+            # Pointer output
+            elif o_mode == 1:
+                a_out = bus.io(0, instruction_pointer + 8, 2)
+                out = bus.io(0, a_out, 2)
+                bus.io(1, out, p1 % p2)
+
+            else:
+                processor_msg(10, o_mode)
+                quit()
+
+        # Division
+        elif opcode == 14:
+            p1_mode = bus.io(0, instruction_pointer + 1, 1)
+            p2_mode = bus.io(0, instruction_pointer + 2, 1)
+            o_mode = bus.io(0, instruction_pointer + 3, 1)
+
+            # Direct p1 mode
+            if p1_mode == 0:
+                p1 = bus.io(0, instruction_pointer + 4, 2)
+
+            # Pointer p1 mode
+            elif p1_mode == 1:
+                a_p1 = bus.io(0, instruction_pointer + 4, 2)
+                p1 = bus.io(0, a_p1, 2)
+
+            else:
+                processor_msg(9, o_mode)
+                quit()
+
+            # Direct p2 mode
+            if p2_mode == 0:
+                p2 = bus.io(0, instruction_pointer + 6, 2)
+
+            # Pointer p2 mode
+            elif p2_mode == 1:
+                a_p2 = bus.io(0, instruction_pointer + 6, 2)
+                p2 = bus.io(0, a_p2, 2)
+
+            else:
+                processor_msg(9, o_mode)
+                quit()
+
+            # Direct output
+            if o_mode == 0:
+                out = bus.io(0, instruction_pointer + 8, 2)
+                bus.io(1, out, p1 // p2)
+
+            # Pointer output
+            elif o_mode == 1:
+                a_out = bus.io(0, instruction_pointer + 8, 2)
+                out = bus.io(0, a_out, 2)
+                bus.io(1, out, p1 // p2)
 
             else:
                 processor_msg(10, o_mode)

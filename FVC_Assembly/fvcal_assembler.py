@@ -57,7 +57,9 @@ ops_params_bytecode = {
     "JMPEQL": [3, 0x09, 3],
     "ERR": [0, 0x0A, 0],
     "PRINT": [1, 0x03, 1],
-    "CPYBLK": [2, 0x0B, 3]
+    "CPYBLK": [2, 0x0B, 3],
+    "MOD": [3, 0x0D, 3],
+    "DIV": [3, 0x0E, 3]
 }
 
 keyword_params_bytecode = {
@@ -164,6 +166,7 @@ def compile_fvcal(assembly, out_path):
     # Code is valid, convert to machine code :)
     print("Code validated, compiling...")
     machine_code = bytearray()
+    text_location = 0
 
     for line in lines:
         # Ignore blank lines
@@ -192,35 +195,58 @@ def compile_fvcal(assembly, out_path):
         if op == "PRINT":
             expanded_bytes = bytearray()
             strlen = len(params[0]) - 1
+            prefix = params[0][0]
 
-            # First, we insert a jump ahead
-            # This allows us to store some text data in the binary
-            expanded_bytes.append(0x07)
-            expanded_bytes.append(0x02)
-            expanded_bytes.append(strlen)
-            expanded_bytes.append(0x00)
+            # Printing a string literal, expands to CPYBLK
+            if prefix == '\'':
+                # First, we insert a jump ahead
+                # This allows us to store some text data in the binary
+                expanded_bytes.append(0x07)
+                expanded_bytes.append(0x02)
+                expanded_bytes.append(strlen)
+                expanded_bytes.append(0x00)
 
-            # Store the text data
-            for i in range(strlen):
-                current_letter = params[0][i+1]
-                expanded_bytes.append(FVCTE_table[current_letter])
+                # Store the text data
+                for i in range(strlen):
+                    current_letter = params[0][i + 1]
+                    expanded_bytes.append(FVCTE_table[current_letter])
 
-            # Insert a cpyblk to copy the text data into VRAM
-            expanded_bytes.append(0x0B)
-            expanded_bytes.append(0x00)
-            expanded_bytes.append(0x00)
-            expanded_bytes.append(strlen)
+                # Insert a cpyblk to copy the text data into VRAM
+                expanded_bytes.append(0x0B)
+                expanded_bytes.append(0x00)
+                expanded_bytes.append(0x00)
+                expanded_bytes.append(strlen)
 
-            # Calculate the address where the text data is stored in the binary
-            current_address = len(machine_code) + len(expanded_bytes) + 28 - strlen
-            current_address_b = current_address.to_bytes(2, 'little')
-            expanded_bytes += current_address_b
+                # Calculate the address where the text data is stored in the binary
+                current_address = len(machine_code) + len(expanded_bytes) + 28 - strlen
+                current_address_b = current_address.to_bytes(2, 'little')
+                expanded_bytes += current_address_b
 
-            # The cpyblk instruction will write to the text portion of VRAM
-            expanded_bytes.append(0xA8)
-            expanded_bytes.append(0x61)
+                vram_location = 0x61A8 + text_location
+                vram_location_b = vram_location.to_bytes(2, "little")
+
+                # The cpyblk instruction will write to the text portion of VRAM
+                expanded_bytes += vram_location_b
+
+            # Pointer to 16-bit int, expands to CPYBLK
+            elif prefix == '#':
+                strlen = 2
+                expanded_bytes.append(0x0B)  # CPYBLK opcode
+                expanded_bytes.append(0x00)
+                expanded_bytes.append(0x00)
+                expanded_bytes.append(0x02)  # 16-bit int
+
+                addr_to_print = int(params[0][1:])
+                expanded_bytes += addr_to_print.to_bytes(2, "little")
+
+                vram_location = 0x61A8 + text_location
+                vram_location_b = vram_location.to_bytes(2, "little")
+
+                # The cpyblk instruction will write to the text portion of VRAM
+                expanded_bytes += vram_location_b
 
             machine_code += expanded_bytes
+            text_location += strlen
 
         # Handle all other operators
         else:

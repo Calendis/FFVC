@@ -132,7 +132,7 @@ def await_input():
         elif x == "loadfont":
             # Load font into RAM
             font = open("files/font2.bgt", 'rb').read()
-            bus.io(1, 32, font)
+            bus.io(1, 532, font)
 
         elif x == "clearram":
             # Clear program memory, but not the first 32 bytes of ram, or VRAM

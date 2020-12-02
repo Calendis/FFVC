@@ -1,6 +1,31 @@
-0  COPY   #0 #250
-10 META   $250
-20 ADD    #1 $250 #250
-30 JMPEQL %4 $250 #1000
-35 JMP    #39
-40 DONE
+/ Prints numbers to the virtual screen
+/ Supports up to 3-digit numbers
+
+/ Initialize addrs
+0  COPY   #0 #300
+
+/ Get digits and store to $302, 306, 308
+10 MOD $300 #10 #302
+20 DIV $300 #10 #304
+25 MOD $304 #10 #306
+30 DIV $304 #10 #308
+
+/ Increment digits into the printable range
+31 ADD    $302 #16 #302
+35 ADD    $306 #16 #306
+36 ADD    $308 #16 #308
+
+/ Display digits on the screen
+40 PRINT  #308
+45 PRINT  #306
+46 PRINT  #302
+47 PRINT 'A
+
+/ Increment $300
+50 ADD    #1 $300 #300
+
+/ If counter is high enough, jump ahead...
+60 JMPEQL %4 $300 #1000
+/ ...else, jump back
+70 JMP    #39
+80 DONE

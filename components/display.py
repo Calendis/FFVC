@@ -143,7 +143,8 @@ class Screen:
 
         # Text mode
         elif self.mode[0] == 1:
-            font_location_offset = 0
+            y = 0
+            font_location_offset = 500
 
             font_header = bus.io(2, bus.reserved_bytes + font_location_offset, 4)
             font_size = font_header[3]
