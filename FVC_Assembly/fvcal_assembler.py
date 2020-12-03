@@ -10,7 +10,7 @@ from sys import argv
 from os import path
 from time import time
 
-ASSEMBLER_VERSION = 1
+ASSEMBLER_VERSION = 2
 HEADER = bytearray([0x39, 0x49, 0x36, ASSEMBLER_VERSION])
 
 
@@ -28,15 +28,20 @@ def print_err(code, line, *info):
         "Value error\n"
     ]
 
+    """
+        Error message, followed by error type
+    """
     messages = {
         "Bad line number": 0,
         "Small or duplicate line number": 1,
         "Bad operator": 0,
         "Wrong number of parameters": 0,
         "Bad parameter": 0,
-        "Unprefixed parameter": 0
+        "Unprefixed parameter": 0,
+        "Unknown line": 1,
     }
     errstr = list(messages.keys())[code]
+    print("\nCompilation error:\n")
     print(types[messages[errstr]], errstr, *info, "at", line)
     quit()
 
@@ -59,7 +64,8 @@ ops_params_bytecode = {
     "PRINT": [1, 0x03, 1],
     "CPYBLK": [2, 0x0B, 3],
     "MOD": [3, 0x0D, 3],
-    "DIV": [3, 0x0E, 3]
+    "DIV": [3, 0x0E, 3],
+    "GOTO": [1, 0x07, 0]
 }
 
 keyword_params_bytecode = {
@@ -69,6 +75,9 @@ keyword_params_bytecode = {
     "MOD": bytearray([0x15, 0x00]),
 }
 
+"""
+    This dictionary maps characters to their value in FVC Text Encoding
+"""
 FVCTE_table = {
     '0': 0x10,
     '1': 0x11,
@@ -145,11 +154,13 @@ def compile_fvcal(assembly, out_path):
         print("Source file is empty")
         quit()
 
-    # Parse code to make sure it's valid
+    # Parse code to make sure it's valid...
+    # ... and assemble line-address map
+    line_address_map = {}
+    address = 32
     for line in lines:
         if line.strip() != '':
             s_line = line.split()
-
             number = s_line[0]
 
             # Exempt comments from validation
@@ -162,6 +173,9 @@ def compile_fvcal(assembly, out_path):
 
             validate_line(number, op, params, last_number)
             last_number = int(number)
+
+            line_address_map[number] = address
+            address += ops_params_bytecode[op][0]*2 + ops_params_bytecode[op][2]
 
     # Code is valid, convert to machine code :)
     print("Code validated, compiling...")
@@ -192,12 +206,13 @@ def compile_fvcal(assembly, out_path):
         }
 
         # Handle operators that must be expanded to machine code
+        # PRINT expands to JMP and CPYBLK
         if op == "PRINT":
             expanded_bytes = bytearray()
             strlen = len(params[0]) - 1
             prefix = params[0][0]
 
-            # Printing a string literal, expands to CPYBLK
+            # Printing a string literal
             if prefix == '\'':
                 # First, we insert a jump ahead
                 # This allows us to store some text data in the binary
@@ -228,7 +243,7 @@ def compile_fvcal(assembly, out_path):
                 # The cpyblk instruction will write to the text portion of VRAM
                 expanded_bytes += vram_location_b
 
-            # Pointer to 16-bit int, expands to CPYBLK
+            # Pointer to 16-bit int
             elif prefix == '#':
                 strlen = 2
                 expanded_bytes.append(0x0B)  # CPYBLK opcode
@@ -247,6 +262,25 @@ def compile_fvcal(assembly, out_path):
 
             machine_code += expanded_bytes
             text_location += strlen
+
+        # GOTO instruction, expands to JMP
+        elif op == "GOTO":
+            goto_line = params[0][1:]
+
+            try:
+                jmp_address = line_address_map[goto_line]
+                print(goto_line, "->", jmp_address)
+            except KeyError:
+                print_err(6, number, goto_line)
+
+            jmp_address_bytes = jmp_address.to_bytes(2, "little")
+
+            expanded_bytes = bytearray()
+            expanded_bytes.append(0x07)  # Create JMP instruction
+            expanded_bytes.append(0x00)  # Direct mode
+
+            expanded_bytes += jmp_address_bytes
+            machine_code += expanded_bytes
 
         # Handle all other operators
         else:
