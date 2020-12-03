@@ -80,6 +80,7 @@ keyword_params_bytecode = {
 """
 FVCTE_table = {
     '§': 0x05,
+    '«': 0x0e,
     '0': 0x10,
     '1': 0x11,
     '2': 0x12,

@@ -55,7 +55,9 @@ def power_on():
     test_img = bytearray(len(test_img_ints))
     for i in range(len(test_img_ints)):
         test_img[i] = test_img_ints[i]
+
     bus.io(1, ram_bound, test_img)
+    refresh_display()
 
     # Play test sound
     pass
@@ -147,9 +149,9 @@ def await_input():
 
 
 def refresh_display():
-    gvram = bus.io(2, ram_bound, mode_bound)
-    bus.io(1, ram_bound, gvram)
-    #bus.vid.refresh(gvram)
+    #gvram = bus.io(2, ram_bound, mode_bound)
+    #bus.io(1, ram_bound, gvram)
+    bus.vid.refresh()
 
 
 power_on()

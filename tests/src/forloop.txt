@@ -19,13 +19,16 @@
 40 PRINT  #308
 45 PRINT  #306
 46 PRINT  #302
-/ 47 PRINT  '§
+47 PRINT  '§
+
+/ Refresh display
+48 COPY #0 #33009
 
 / Increment $300
 50 ADD    #1 $300 #300
 
 / If counter is high enough, jump ahead...
-60 JMPEQL %4 $300 #10
+60 JMPEQL %4 $300 #1000
 / ...else, jump back
 70 JMP    #39
 80 DONE

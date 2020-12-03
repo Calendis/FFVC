@@ -19,7 +19,7 @@ VM Display Specifications:
     24000 to 31999: text
     32000 to 32007: palette
     32008: text(0) or graphics(1) mode?
-    32009: reserved
+    32009: refresh byte
     
 '''
 
@@ -59,6 +59,7 @@ class Screen:
         self.text_bound = 32000
         self.palette_bound = 32008
         self.mode_bound = 32009
+        self.refresh_bound = 32010
 
     def read(self, loc, size):
         return bus.io(2, loc, size)
@@ -94,6 +95,10 @@ class Screen:
         elif loc < self.mode_bound:
             mode = data
 
+        # Refresh write
+        elif loc < self.refresh_bound:
+            self.refresh()
+
         # If palette data was given, store it in the palette register
         if len(palette) > 0:
             self.palette[:len(palette)] = palette
@@ -102,13 +107,13 @@ class Screen:
         if len(mode) > 0:
             self.mode[:len(mode)] = mode
 
-        self.refresh(graphics)
-
-        pygame.display.flip()
-
-    def refresh(self, graphics):
+    def refresh(self):
         # Graphics mode
         if self.mode[0] == 0:
+            # Load graphics data
+            graphics = bus.io(2, 1000, self.colour_bound)
+            #text_data = bus.io(2, 1000 + self.colour_bound, 4000)
+
             # Set up a bitstring for the graphics data
             bit_graphics = ""
             # Reformat the graphics data into bits
@@ -155,9 +160,10 @@ class Screen:
 
         # Text mode
         elif self.mode[0] == 1:
-            y = 0
+            y = bus.io(0, 22, 1)
             font_location_offset = 500
 
+            # Read the font from memory
             font_header = bus.io(2, bus.reserved_bytes + font_location_offset, 4)
             font_size = font_header[3]
             font = bus.io(2, bus.reserved_bytes + font_location_offset, 4 + 9 * font_size)
@@ -173,6 +179,7 @@ class Screen:
             # Ensure the fontmap always contains a null glyph for fallback
             fontmap[0x00] = bytes(8)
 
+            # Get text from VRAM
             text_data = bus.io(2, 1000 + self.colour_bound, 4000)
 
             glyph_surface = pygame.Surface((8, 8))
@@ -190,11 +197,13 @@ class Screen:
                 # Newline
                 elif c == 0x05:
                     bus.io(1, 22, y + 1)
+                    x = 0
                     continue
 
                 # Home
                 elif c == 0x0e:
                     bus.io(1, 22, 0)
+                    x = 0
                     continue
 
                 gx = 0
@@ -251,10 +260,11 @@ class Screen:
                     x = 0
 
                 # Wrap the line register if we try to draw text beyond the bottom of the screen
-                if y >= chars_per_column and False:
-                    print("Wrapping y:", y, '/', chars_per_column)
+                if y >= chars_per_column:
                     bus.io(1, 22, 0)
 
         else:
             display_msg(1, self.mode)
             quit()
+
+        pygame.display.flip()

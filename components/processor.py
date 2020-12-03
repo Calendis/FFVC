@@ -49,7 +49,7 @@ def processor_msg(status_code, *args):
     11: CPYBLK {i_mode, o_mode, size, p1, a_out}
     12: MOVBLK {i_mode, o_mode, size, p1, a_out}
     13: MOD {p1_mode, p2_mode, o_mode, p1, p2, a_out}
-    14: DIV {p1_mode, p2_mode, o_mode, p1, p2, a_out}
+    14: DIV {p1_mode, p2_mode, o_mode, p1, p2, a_out},
     
     PARAMETER MODES
     -----------------------------------------------------------------
@@ -108,7 +108,6 @@ def process_instructions(program):
 
     # Set IPT register
     bus.io(1, 10, bus.reserved_bytes)
-    instruction_pointer = bus.io(0, 10, 2)
 
     # Set OPC register
     bus.io(1, 9, 0)
