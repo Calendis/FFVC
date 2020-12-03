@@ -313,7 +313,33 @@ def compile_fvcal(assembly, out_path):
 
         # GTEQL instruction, expands to JMPEQL
         elif op == "GTEQL":
-            pass
+            expanded_bytes = bytearray()
+
+            mode_byte1 = prefix_to_byte[params[0][0]]
+            mode_byte2 = prefix_to_byte[params[1][0]]
+            addr1 = int(params[0][1:])
+            addr2 = int(params[1][1:])
+            addr1_bytes = addr1.to_bytes(2, "little")
+            addr2_bytes = addr2.to_bytes(2, "little")
+            goto_line = params[2][1:]
+
+            try:
+                jmp_address = line_address_map[goto_line]
+
+            except KeyError:
+                print_err(6, number, goto_line)
+
+            jmp_address_bytes = jmp_address.to_bytes(2, "little")
+
+            expanded_bytes.append(0x09)
+            expanded_bytes.append(0x00)
+            expanded_bytes.append(mode_byte1)
+            expanded_bytes.append(mode_byte2)
+            expanded_bytes += jmp_address_bytes
+            expanded_bytes += addr1_bytes
+            expanded_bytes += addr2_bytes
+
+            machine_code += expanded_bytes
 
         # Handle all other operators
         else:
