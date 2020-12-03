@@ -36,10 +36,10 @@ JMPEQL            | $09
 ERR               | $0A
 PRINT             | $03 00 00 ??00 A861
 CPYBLK            | $0B
-                  |
-                  |
-                  |
-                  |
+MOVBLK            |
+MOD               |
+DIV               |
+GOTO              | $07 00 ????
                   |
                   |
                   |
