@@ -68,24 +68,31 @@ class Screen:
         if type(data) == int:
             data = data.to_bytes(2, "little")
 
+        graphics = []
+        text = []
+        palette = []
+        mode = []
+
+        # Negative write
         if loc < 0:
             display_msg(0)
             quit()
 
-        # The first 24kB are graphical data
-        graphics = data[loc:self.colour_bound]
+        # Colour data write
+        elif loc < self.colour_bound:
+            graphics = data
 
-        # The next 8kB are text data
-        text = data[self.colour_bound - loc:self.text_bound]
+        # Text data write
+        elif loc < self.text_bound:
+            text = data
 
-        # The palette is stored in the next 8 bytes
-        palette = data[self.text_bound - loc:self.palette_bound - loc]
+        # Palette data write
+        elif loc < self.palette_bound:
+            palette = data
 
-        # What mode are we in?
-        mode = data[self.palette_bound - loc:self.mode_bound - loc]
-
-        # The final byte is reserved
-        reserved = data[self.mode_bound - loc:32010]
+        # Mode data write
+        elif loc < self.mode_bound:
+            mode = data
 
         # If palette data was given, store it in the palette register
         if len(palette) > 0:
@@ -95,6 +102,11 @@ class Screen:
         if len(mode) > 0:
             self.mode[:len(mode)] = mode
 
+        self.refresh(graphics)
+
+        pygame.display.flip()
+
+    def refresh(self, graphics):
         # Graphics mode
         if self.mode[0] == 0:
             # Set up a bitstring for the graphics data
@@ -246,5 +258,3 @@ class Screen:
         else:
             display_msg(1, self.mode)
             quit()
-
-        pygame.display.flip()

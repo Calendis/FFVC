@@ -79,6 +79,7 @@ keyword_params_bytecode = {
     This dictionary maps characters to their value in FVC Text Encoding
 """
 FVCTE_table = {
+    '§': 0x05,
     '0': 0x10,
     '1': 0x11,
     '2': 0x12,

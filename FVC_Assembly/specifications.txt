@@ -4,22 +4,22 @@ Parameters are values/address as normal, but they also support certain keywords.
 See processor.py for documentation on specific instructions and parameters.
 
 (Addresses listed as little-endian)
-KEYWORD           | ADDRESS | SIZE (bytes)
-------------------------------------------
-OPC               | $09 00  | 1
-IPT               | $0A 00  | 2
-PAL               | $0C 00  | 8
-MOD               | $15 00  | 1
-                  |         |
-                  |         |
-                  |         |
-                  |         |
-                  |         |
-                  |         |
-                  |         |
-                  |         |
-                  |         |
-                  |         |
+KEYWORD           | ADDRESS | SIZE (bytes) | DESCRIPTION
+---------------------------------------------------------
+OPC               | $09 00  | 1            | Opcode
+IPT               | $0A 00  | 2            | Instruction ptr
+PAL               | $0C 00  | 8            | Palette
+MOD               | $15 00  | 1            | Mode
+                  |         |              |
+                  |         |              |
+                  |         |              |
+                  |         |              |
+                  |         |              |
+                  |         |              |
+                  |         |              |
+                  |         |              |
+                  |         |              |
+                  |         |              |
 
 
 Assembly          | Machine code
