@@ -65,7 +65,9 @@ ops_params_bytecode = {
     "CPYBLK": [2, 0x0B, 3],
     "MOD": [3, 0x0D, 3],
     "DIV": [3, 0x0E, 3],
-    "GOTO": [1, 0x07, 0]
+    "GOTO": [1, 0x07, 0],
+    "GTNUL": [2, 0x08, 1],
+    "GTEQL": [3, 0x09, 2]
 }
 
 keyword_params_bytecode = {
@@ -271,7 +273,7 @@ def compile_fvcal(assembly, out_path):
 
             try:
                 jmp_address = line_address_map[goto_line]
-                print(goto_line, "->", jmp_address)
+
             except KeyError:
                 print_err(6, number, goto_line)
 
@@ -283,6 +285,35 @@ def compile_fvcal(assembly, out_path):
 
             expanded_bytes += jmp_address_bytes
             machine_code += expanded_bytes
+
+        # GTNUL instruction, expands to JMPNUL
+        elif op == "GTNUL":
+            expanded_bytes = bytearray()
+
+            mode_byte = prefix_to_byte[params[0][0]]
+            addr = int(params[0][1:])
+            addr_bytes = addr.to_bytes(2, "little")
+
+            goto_line = params[1][1:]
+            try:
+                jmp_address = line_address_map[goto_line]
+
+            except KeyError:
+                print_err(6, number, goto_line)
+
+            jmp_address_bytes = jmp_address.to_bytes(2, "little")
+
+            expanded_bytes.append(0x08)
+            expanded_bytes.append(0x00)
+            expanded_bytes.append(mode_byte)
+            expanded_bytes += jmp_address_bytes
+            expanded_bytes += addr_bytes
+
+            machine_code += expanded_bytes
+
+        # GTEQL instruction, expands to JMPEQL
+        elif op == "GTEQL":
+            pass
 
         # Handle all other operators
         else:
@@ -408,7 +439,8 @@ def get_input(args):
 
     # Everything seems good!
     assembly = open(in_path, 'r').read()
-    print("Compiling", in_path, "to", out_path)
+    print("\nCompiling", in_path, "to", out_path)
+    print("------------------------------------")
     compile_fvcal(assembly, out_path)
 
 
