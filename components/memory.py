@@ -8,14 +8,13 @@ from math import ceil
     ----------------------------------------------
     0 to 3     | 0:4    | block size
     4 to 8     | 4:9    | earliest writeable address
-    9 to 11    | 9:12   | cpu registers
-        9     OPC
-        10-11 IPT
+    9 to 11    | 9:12   | free
     12 to 21   | 12:22  | display registers
         12-20 palette
         21    mode
         22    line
-    23 to 31   | 23:32  | free registers
+    23 to 24   | 23:25  | input
+    26 to 31   | 26:32  | free
 '''
 
 reserved_bytes = 32

@@ -10,7 +10,7 @@ OPC               | $09 00  | 1            | Opcode
 IPT               | $0A 00  | 2            | Instruction ptr
 PAL               | $0C 00  | 8            | Palette
 MOD               | $15 00  | 1            | Mode
-                  |         |              |
+IN                | $17 00  | 2            | Input
                   |         |              |
                   |         |              |
                   |         |              |

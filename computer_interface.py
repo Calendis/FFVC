@@ -1,9 +1,13 @@
+"""
+    This script serves as a very basic magic "operating system" for the FVC (Fun Virtual Computer).
+    In the future, I will write the operating system on the computer itself rather than in Python
+"""
 import os
 
 from components import bus
 from random import randint
 
-# Get useful magic numbers
+# Get useful values
 resolution = bus.vid.true_resolution
 colour_bound = bus.vid.colour_bound
 text_bound = bus.vid.text_bound

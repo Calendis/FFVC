@@ -81,7 +81,7 @@ def processor_msg(status_code, *args):
 
 
 def process_instructions(program):
-
+    # Length, in bytes of each opcode's parameters
     opcode_parameter_lengths = [
         0,  # no-op
         9, 9,  # add, mult
@@ -90,13 +90,14 @@ def process_instructions(program):
         3,  # display
         3, 6, 9,  # jmp, jmpnul, jmpeql
         -1,  # term error
-        7, 7, # cpyblk, movblk
-        9, 9 # mod, div
+        7, 7,  # cpyblk, movblk
+        9, 9  # mod, div
     ]
 
-    # Load program
     processor_msg(4, "loading program...")
     write_address = bus.reserved_bytes  # The first 32 bytes are reserved and should not be touched
+
+    # Load each instruction/param into RAM
     for instruction in program:
         instruction_size = max(1, ceil(instruction.bit_length() / 8))
         instruction_bytes = instruction.to_bytes(instruction_size, 'little')
@@ -104,14 +105,19 @@ def process_instructions(program):
 
         write_address += instruction_size
 
-    processor_msg(4, "loaded program of size", write_address-bus.reserved_bytes)
+    processor_msg(4, "loaded program of size", write_address - bus.reserved_bytes)
 
-    # Set IPT register
-    bus.io(1, 10, bus.reserved_bytes)
+    '''
+        Our registers are memory mapped. This is unusual, so may be changed in the future
+    '''
+    # Set IPT register to 32 as default
+    # bus.io(1, bus.reserved_bytes, bus.reserved_bytes)
+    instruction_pointer = 32
 
-    # Set OPC register
-    bus.io(1, 9, 0)
-    opcode = bus.io(0, 9, 1)
+    # Set OPC register to 0 as default
+    # bus.io(1, 9, 0)
+    # opcode = bus.io(0, 9, 1)
+    opcode = 0
 
     # Execution of the program occurs in this loop
     # it is the core of this program and handles all the processor opcodes/logic
@@ -119,10 +125,12 @@ def process_instructions(program):
     while opcode != 5:
 
         # What's the instruction pointer currently?
-        instruction_pointer = bus.io(0, 10, 2)
+        # instruction_pointer = bus.io(0, 10, 2)
 
         # Get the opcode from program memory (one byte)
         opcode = bus.io(0, instruction_pointer, 1)
+        print("opcode:", opcode)
+        print("instruction pointer:", instruction_pointer)
 
         # Make sure opcode is valid
         if opcode >= len(opcode_parameter_lengths):
@@ -138,17 +146,17 @@ def process_instructions(program):
 
         # Add
         elif opcode == 1:
-            p1_mode = bus.io(0, instruction_pointer+1, 1)
-            p2_mode = bus.io(0, instruction_pointer+2, 1)
-            o_mode = bus.io(0, instruction_pointer+3, 1)
+            p1_mode = bus.io(0, instruction_pointer + 1, 1)
+            p2_mode = bus.io(0, instruction_pointer + 2, 1)
+            o_mode = bus.io(0, instruction_pointer + 3, 1)
 
             # Direct p1 mode
             if p1_mode == 0:
-                p1 = bus.io(0, instruction_pointer+4, 2)
+                p1 = bus.io(0, instruction_pointer + 4, 2)
 
             # Pointer p1 mode
             elif p1_mode == 1:
-                a_p1 = bus.io(0, instruction_pointer+4, 2)
+                a_p1 = bus.io(0, instruction_pointer + 4, 2)
                 p1 = bus.io(0, a_p1, 2)
 
             else:
@@ -170,12 +178,12 @@ def process_instructions(program):
 
             # Direct output
             if o_mode == 0:
-                out = bus.io(0, instruction_pointer+8, 2)
+                out = bus.io(0, instruction_pointer + 8, 2)
                 bus.io(1, out, p1 + p2)
 
             # Pointer output
             elif o_mode == 1:
-                a_out = bus.io(0, instruction_pointer+8, 2)
+                a_out = bus.io(0, instruction_pointer + 8, 2)
                 out = bus.io(0, a_out, 2)
                 bus.io(1, out, p1 + p2)
 
@@ -232,16 +240,16 @@ def process_instructions(program):
 
         # Copy
         elif opcode == 3:
-            i_mode = bus.io(0, instruction_pointer+1, 1)
-            o_mode = bus.io(0, instruction_pointer+2, 1)
+            i_mode = bus.io(0, instruction_pointer + 1, 1)
+            o_mode = bus.io(0, instruction_pointer + 2, 1)
 
             # Direct mode
             if i_mode == 0:
-                p1 = bus.io(0, instruction_pointer+3, 2)
+                p1 = bus.io(0, instruction_pointer + 3, 2)
 
             # Pointer mode
             elif i_mode == 1:
-                a_p1 = bus.io(0, instruction_pointer+3, 2)
+                a_p1 = bus.io(0, instruction_pointer + 3, 2)
                 p1 = bus.io(0, a_p1, 2)
 
             else:
@@ -250,12 +258,12 @@ def process_instructions(program):
 
             # Direct output mode
             if o_mode == 0:
-                out = bus.io(0, instruction_pointer+5, 2)
+                out = bus.io(0, instruction_pointer + 5, 2)
                 bus.io(1, out, p1)
 
             # Pointer output mode
             elif o_mode == 1:
-                a_out = bus.io(0, instruction_pointer+5, 2)
+                a_out = bus.io(0, instruction_pointer + 5, 2)
                 out = bus.io(0, a_out, 2)
                 bus.io(1, out, p1)
 
@@ -263,16 +271,15 @@ def process_instructions(program):
                 processor_msg(10, o_mode)
                 quit()
 
-
         # Move
         elif opcode == 4:
-            i_mode = bus.io(0, instruction_pointer+1, 1)
-            o_mode = bus.io(0, instruction_pointer+2, 1)
+            i_mode = bus.io(0, instruction_pointer + 1, 1)
+            o_mode = bus.io(0, instruction_pointer + 2, 1)
 
             # Move does not have a direct mode, since there is nowhere to move a literal from!
             # Pointer mode
             if i_mode == 0:
-                a_p1 = bus.io(0, instruction_pointer+3, 2)
+                a_p1 = bus.io(0, instruction_pointer + 3, 2)
                 p1 = bus.io(0, a_p1, 2)
 
                 # The delete portion of the move instruction
@@ -280,7 +287,7 @@ def process_instructions(program):
 
             # Double pointer mode
             elif i_mode == 1:
-                aa_p1 = bus.io(0, instruction_pointer+3, 2)
+                aa_p1 = bus.io(0, instruction_pointer + 3, 2)
                 a_p1 = bus.io(0, aa_p1, 2)
                 p1 = bus.io(0, a_p1, 2)
 
@@ -293,12 +300,12 @@ def process_instructions(program):
 
             # Direct output mode
             if o_mode == 0:
-                out = bus.io(0, instruction_pointer+5, 2)
+                out = bus.io(0, instruction_pointer + 5, 2)
                 bus.io(1, out, p1)
 
             # Pointer output mode
             elif o_mode == 1:
-                a_out = bus.io(0, instruction_pointer+5, 2)
+                a_out = bus.io(0, instruction_pointer + 5, 2)
                 out = bus.io(0, a_out, 2)
                 bus.io(1, out, p1)
 
@@ -312,16 +319,16 @@ def process_instructions(program):
 
         # Display value
         elif opcode == 6:
-            i_mode = bus.io(0, instruction_pointer+1, 1)
+            i_mode = bus.io(0, instruction_pointer + 1, 1)
 
             # Direct mode
             if i_mode == 0:
-                p1 = bus.io(0, instruction_pointer+2, 2)
+                p1 = bus.io(0, instruction_pointer + 2, 2)
                 print(p1)
 
             # Pointer mode
             elif i_mode == 1:
-                a_p1 = bus.io(0, instruction_pointer+2, 2)
+                a_p1 = bus.io(0, instruction_pointer + 2, 2)
                 p1 = bus.io(0, a_p1, 2)
                 print(p1)
 
@@ -331,15 +338,15 @@ def process_instructions(program):
 
         # Jump
         elif opcode == 7:
-            jmp_mode = bus.io(0, instruction_pointer+1, 1)
+            jmp_mode = bus.io(0, instruction_pointer + 1, 1)
 
             # Direct jump
             if jmp_mode == 0 or jmp_mode == 2:
-                a_jmp = bus.io(0, instruction_pointer+2, 2)
+                a_jmp = bus.io(0, instruction_pointer + 2, 2)
 
             # Pointer jump
             elif jmp_mode == 1 or jmp_mode == 3:
-                aa_jmp = bus.io(0, instruction_pointer+2, 2)
+                aa_jmp = bus.io(0, instruction_pointer + 2, 2)
                 a_jmp = bus.io(0, aa_jmp, 2)
 
             else:
@@ -348,25 +355,27 @@ def process_instructions(program):
 
             # Normal jump
             if jmp_mode == 0 or jmp_mode == 1:
-                bus.io(1, 10, a_jmp - parameter_bytes - 1)
+                instruction_pointer = a_jmp - parameter_bytes - 1
+                #bus.io(1, 10, a_jmp - parameter_bytes - 1)
 
             # Relative jump
             elif jmp_mode == 2 or jmp_mode == 3:
-                bus.io(1, 10,
-                       bus.io(0, 10, 2) + a_jmp)
+                instruction_pointer += a_jmp
+                #bus.io(1, 10,
+                       #bus.io(0, 10, 2) + a_jmp)
 
         # Jump if null
         elif opcode == 8:
-            jmp_mode = bus.io(0, instruction_pointer+1, 1)
-            p1_mode = bus.io(0, instruction_pointer+2, 1)
+            jmp_mode = bus.io(0, instruction_pointer + 1, 1)
+            p1_mode = bus.io(0, instruction_pointer + 2, 1)
 
             # Direct jump
             if jmp_mode == 0 or jmp_mode == 2:
-                a_jmp = bus.io(0, instruction_pointer+3, 2)
+                a_jmp = bus.io(0, instruction_pointer + 3, 2)
 
             # Pointer jump
             elif jmp_mode == 1 or jmp_mode == 3:
-                aa_jmp = bus.io(0, instruction_pointer+3, 2)
+                aa_jmp = bus.io(0, instruction_pointer + 3, 2)
                 a_jmp = bus.io(0, aa_jmp, 2)
 
             else:
@@ -375,11 +384,11 @@ def process_instructions(program):
 
             # Literal param
             if p1_mode == 0:
-                p1 = bus.io(0, instruction_pointer+5, 2)
+                p1 = bus.io(0, instruction_pointer + 5, 2)
 
             # Pointer param
             elif p1_mode == 1:
-                a_p1 = bus.io(0, instruction_pointer+5, 2)
+                a_p1 = bus.io(0, instruction_pointer + 5, 2)
                 p1 = bus.io(0, a_p1, 2)
 
             else:
@@ -390,14 +399,14 @@ def process_instructions(program):
             if p1 == 0:
                 # Normal jump
                 if jmp_mode == 0 or jmp_mode == 1:
-                    #instruction_pointer = a_jmp - parameter_bytes - 1
-                    bus.io(1, 10, a_jmp - parameter_bytes - 1)
+                    instruction_pointer = a_jmp - parameter_bytes - 1
+                    # bus.io(1, 10, a_jmp - parameter_bytes - 1)
 
                 # Relative jump
                 elif jmp_mode == 2 or jmp_mode == 3:
-                    #instruction_pointer += a_jmp
-                    bus.io(1, 10,
-                           bus.io(0, 10, 2) + a_jmp)
+                    instruction_pointer += a_jmp
+                    # bus.io(1, 10,
+                    # bus.io(0, 10, 2) + a_jmp)
 
         # Jump if equal
         elif opcode == 9:
@@ -407,11 +416,11 @@ def process_instructions(program):
 
             # Direct jump
             if jmp_mode == 0 or jmp_mode == 2:
-                a_jmp = bus.io(0, instruction_pointer+4, 2)
+                a_jmp = bus.io(0, instruction_pointer + 4, 2)
 
             # Pointer jump
             elif jmp_mode == 1 or jmp_mode == 3:
-                aa_jmp = bus.io(0, instruction_pointer+4, 2)
+                aa_jmp = bus.io(0, instruction_pointer + 4, 2)
                 a_jmp = bus.io(0, aa_jmp, 2)
 
             else:
@@ -419,11 +428,11 @@ def process_instructions(program):
 
             # Literal param
             if p1_mode == 0:
-                p1 = bus.io(0, instruction_pointer+6, 2)
+                p1 = bus.io(0, instruction_pointer + 6, 2)
 
             # Pointer param
             elif p1_mode == 1:
-                a_p1 = bus.io(0, instruction_pointer+6, 2)
+                a_p1 = bus.io(0, instruction_pointer + 6, 2)
                 p1 = bus.io(0, a_p1, 2)
 
             else:
@@ -436,7 +445,7 @@ def process_instructions(program):
 
             # Pointer param
             elif p2_mode == 1:
-                a_p2 = bus.io(0, instruction_pointer+8, 2)
+                a_p2 = bus.io(0, instruction_pointer + 8, 2)
                 p2 = bus.io(0, a_p2, 2)
 
             else:
@@ -447,13 +456,13 @@ def process_instructions(program):
             if p1 == p2:
                 # Normal jump
                 if jmp_mode == 0 or jmp_mode == 1:
-                    #instruction_pointer = a_jmp - parameter_bytes - 1
-                    bus.io(1, 10, a_jmp - parameter_bytes - 1)
+                    instruction_pointer = a_jmp - parameter_bytes - 1
+                    # bus.io(1, 10, a_jmp - parameter_bytes - 1)
 
                 elif jmp_mode == 2 or jmp_mode == 3:
-                    #instruction_pointer += a_jmp
-                    bus.io(1, 10,
-                           bus.io(0, 10, 2) + a_jmp)
+                    instruction_pointer += a_jmp
+                    # bus.io(1, 10,
+                    # bus.io(0, 10, 2) + a_jmp)
 
         # Terminate with error
         elif opcode == 10:
@@ -599,6 +608,6 @@ def process_instructions(program):
             processor_msg(3, opcode, "at", instruction_pointer, "[EXHAUSTED]")
             quit()
 
-        #instruction_pointer += 1 + parameter_bytes
-        bus.io(1, 10,
-               bus.io(0, 10, 2) + 1 + parameter_bytes)
+        instruction_pointer += 1 + parameter_bytes
+        # bus.io(1, 10,
+        # bus.io(0, 10, 2) + 1 + parameter_bytes)
