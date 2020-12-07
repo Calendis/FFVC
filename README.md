@@ -12,6 +12,7 @@ Current features:<br>
 * Display
   * Font support
   * Currently uses pygame
+  * Palette and mode registers are memory-mapped
 * Assembler
   * Supports line numbers/GOTO, which expands to machine instructions
   * PRINT instruction which expands to machine instructions
@@ -29,7 +30,6 @@ To-do list
 * Audio
 * More peripherals
 * Processor clock cycle
-* De-map display registers
 * Support access of non-mapped registers
 
 What is NOT simulated
