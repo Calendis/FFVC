@@ -28,3 +28,4 @@ To-do list
 * Input/processor interrupts
 * Audio
 * More peripherals
+* Processor clock cycle
