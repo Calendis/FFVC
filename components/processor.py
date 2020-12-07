@@ -73,10 +73,10 @@ def processor_msg(status_code, *args):
     execute from unintended areas, causing either an unknown opcode error or
     strange undefined behaviour.
     
-    REGISTERS (decimal)
+    REGISTERS
     -------------------------------------------------------------------
-    OPC register: 9
-    IPT register: 10-11
+    OPC register: opcode
+    IPT register: instruction pointer
 '''
 
 
@@ -110,13 +110,8 @@ def process_instructions(program):
     '''
         Our registers are memory mapped. This is unusual, so may be changed in the future
     '''
-    # Set IPT register to 32 as default
-    # bus.io(1, bus.reserved_bytes, bus.reserved_bytes)
-    instruction_pointer = 32
-
-    # Set OPC register to 0 as default
-    # bus.io(1, 9, 0)
-    # opcode = bus.io(0, 9, 1)
+    # Initialize the CPU registers
+    instruction_pointer = bus.reserved_bytes
     opcode = 0
 
     # Execution of the program occurs in this loop
@@ -124,13 +119,8 @@ def process_instructions(program):
     processor_msg(4, "running program...")
     while opcode != 5:
 
-        # What's the instruction pointer currently?
-        # instruction_pointer = bus.io(0, 10, 2)
-
         # Get the opcode from program memory (one byte)
         opcode = bus.io(0, instruction_pointer, 1)
-        print("opcode:", opcode)
-        print("instruction pointer:", instruction_pointer)
 
         # Make sure opcode is valid
         if opcode >= len(opcode_parameter_lengths):
@@ -356,13 +346,10 @@ def process_instructions(program):
             # Normal jump
             if jmp_mode == 0 or jmp_mode == 1:
                 instruction_pointer = a_jmp - parameter_bytes - 1
-                #bus.io(1, 10, a_jmp - parameter_bytes - 1)
 
             # Relative jump
             elif jmp_mode == 2 or jmp_mode == 3:
                 instruction_pointer += a_jmp
-                #bus.io(1, 10,
-                       #bus.io(0, 10, 2) + a_jmp)
 
         # Jump if null
         elif opcode == 8:
@@ -400,13 +387,10 @@ def process_instructions(program):
                 # Normal jump
                 if jmp_mode == 0 or jmp_mode == 1:
                     instruction_pointer = a_jmp - parameter_bytes - 1
-                    # bus.io(1, 10, a_jmp - parameter_bytes - 1)
 
                 # Relative jump
                 elif jmp_mode == 2 or jmp_mode == 3:
                     instruction_pointer += a_jmp
-                    # bus.io(1, 10,
-                    # bus.io(0, 10, 2) + a_jmp)
 
         # Jump if equal
         elif opcode == 9:
@@ -457,12 +441,9 @@ def process_instructions(program):
                 # Normal jump
                 if jmp_mode == 0 or jmp_mode == 1:
                     instruction_pointer = a_jmp - parameter_bytes - 1
-                    # bus.io(1, 10, a_jmp - parameter_bytes - 1)
 
                 elif jmp_mode == 2 or jmp_mode == 3:
                     instruction_pointer += a_jmp
-                    # bus.io(1, 10,
-                    # bus.io(0, 10, 2) + a_jmp)
 
         # Terminate with error
         elif opcode == 10:
@@ -609,5 +590,3 @@ def process_instructions(program):
             quit()
 
         instruction_pointer += 1 + parameter_bytes
-        # bus.io(1, 10,
-        # bus.io(0, 10, 2) + 1 + parameter_bytes)
