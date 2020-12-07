@@ -29,3 +29,5 @@ To-do list
 * Audio
 * More peripherals
 * Processor clock cycle
+* De-map display registers
+* Support access of non-mapped registers
