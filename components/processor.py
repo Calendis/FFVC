@@ -114,6 +114,7 @@ def process_instructions(program):
     #   Special registers
     instruction_pointer = bus.reserved_bytes
     opcode = 0
+    parameter_bytes = 0
     #   General-purpose registers, for modes and params
     reg0 = 0
     reg1 = 0

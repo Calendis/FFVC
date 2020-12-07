@@ -3,7 +3,7 @@ FFVC (For-Fun Virtual Computer)
 Virtual computer made for learning purposes.<br>
 Current features:<br>
 * Processor
-  * Instruction ptr and opcode registers
+  * Special registers such as instruction pointer
   * 8 general-purpose registers
   * 15 instructions
 * Memory
