@@ -111,11 +111,22 @@ def process_instructions(program):
         Our registers are memory mapped. This is unusual, so may be changed in the future
     '''
     # Initialize the CPU registers
+    #   Special registers
     instruction_pointer = bus.reserved_bytes
     opcode = 0
+    #   General-purpose registers, for modes and params
+    reg0 = 0
+    reg1 = 0
+    reg2 = 0
+    reg3 = 0
+    reg4 = 0
+    reg5 = 0
+    reg6 = 0
+    reg7 = 0
 
     # Execution of the program occurs in this loop
     # it is the core of this program and handles all the processor opcodes/logic
+    # In the future, a clock and fetch-decode-execute cycle should be implemented
     processor_msg(4, "running program...")
     while opcode != 5:
 
@@ -136,314 +147,377 @@ def process_instructions(program):
 
         # Add
         elif opcode == 1:
-            p1_mode = bus.io(0, instruction_pointer + 1, 1)
-            p2_mode = bus.io(0, instruction_pointer + 2, 1)
-            o_mode = bus.io(0, instruction_pointer + 3, 1)
+            # Load parameter modes into registers
+            reg0 = bus.io(0, instruction_pointer + 1, 1)   # p1 mode
+            reg1 = bus.io(0, instruction_pointer + 2, 1)   # p2 mode
+            reg2 = bus.io(0, instruction_pointer + 3, 1)   # o mode
 
             # Direct p1 mode
-            if p1_mode == 0:
-                p1 = bus.io(0, instruction_pointer + 4, 2)
+            if reg0 == 0:
+                # Load p1 into register
+                reg3 = bus.io(0, instruction_pointer + 4, 2)  # p1
 
             # Pointer p1 mode
-            elif p1_mode == 1:
-                a_p1 = bus.io(0, instruction_pointer + 4, 2)
-                p1 = bus.io(0, a_p1, 2)
+            elif reg0 == 1:
+                # Load ptr to p1 into register, then dereference into register
+                reg3 = bus.io(0, instruction_pointer + 4, 2)
+                reg3 = bus.io(0, reg3, 2)
 
             else:
-                processor_msg(9, o_mode)
+                processor_msg(9, reg2)
                 quit()
 
             # Direct p2 mode
-            if p2_mode == 0:
-                p2 = bus.io(0, instruction_pointer + 6, 2)
+            if reg1 == 0:
+                # Load p2 into register
+                reg4 = bus.io(0, instruction_pointer + 6, 2)  # p2
 
             # Pointer p2 mode
-            elif p2_mode == 1:
-                a_p2 = bus.io(0, instruction_pointer + 6, 2)
-                p2 = bus.io(0, a_p2, 2)
+            elif reg1 == 1:
+                # Load ptr to p2 into register, then deref into register
+                reg4 = bus.io(0, instruction_pointer + 6, 2)
+                reg4 = bus.io(0, reg4, 2)
 
             else:
-                processor_msg(9, o_mode)
+                processor_msg(9, reg2)
                 quit()
 
             # Direct output
-            if o_mode == 0:
-                out = bus.io(0, instruction_pointer + 8, 2)
-                bus.io(1, out, p1 + p2)
+            if reg2 == 0:
+                # Load out addr into register
+                reg5 = bus.io(0, instruction_pointer + 8, 2)  # out
 
             # Pointer output
-            elif o_mode == 1:
-                a_out = bus.io(0, instruction_pointer + 8, 2)
-                out = bus.io(0, a_out, 2)
-                bus.io(1, out, p1 + p2)
+            elif reg2 == 1:
+                # Load ptr to out addr into register, then deref
+                reg5 = bus.io(0, instruction_pointer + 8, 2)
+                reg5 = bus.io(0, reg5, 2)
 
             else:
-                processor_msg(10, o_mode)
+                processor_msg(10, reg2)
                 quit()
+
+            # Add reg3 and reg4, store in reg6
+            reg6 = reg3 + reg4
+
+            # Write contents of reg6 to memory at addr reg5
+            bus.io(1, reg5, reg6)
 
         # Multiply
         elif opcode == 2:
-            p1_mode = bus.io(0, instruction_pointer + 1, 1)
-            p2_mode = bus.io(0, instruction_pointer + 2, 1)
-            o_mode = bus.io(0, instruction_pointer + 3, 1)
+            # Load parameter modes into registers
+            reg0 = bus.io(0, instruction_pointer + 1, 1)  # p1 mode
+            reg1 = bus.io(0, instruction_pointer + 2, 1)  # p2 mode
+            reg2 = bus.io(0, instruction_pointer + 3, 1)  # o mode
 
             # Direct p1 mode
-            if p1_mode == 0:
-                p1 = bus.io(0, instruction_pointer + 4, 2)
+            if reg0 == 0:
+                # Load p1 into register
+                reg3 = bus.io(0, instruction_pointer + 4, 2)  # p1
 
             # Pointer p1 mode
-            elif p1_mode == 1:
-                a_p1 = bus.io(0, instruction_pointer + 4, 2)
-                p1 = bus.io(0, a_p1, 2)
+            elif reg0 == 1:
+                # Load ptr to p1 into register, then dereference into register
+                reg3 = bus.io(0, instruction_pointer + 4, 2)
+                reg3 = bus.io(0, reg3, 2)
 
             else:
-                processor_msg(9, o_mode)
+                processor_msg(9, reg2)
                 quit()
 
             # Direct p2 mode
-            if p2_mode == 0:
-                p2 = bus.io(0, instruction_pointer + 6, 2)
+            if reg1 == 0:
+                # Load p2 into register
+                reg4 = bus.io(0, instruction_pointer + 6, 2)  # p2
 
             # Pointer p2 mode
-            elif p2_mode == 1:
-                a_p2 = bus.io(0, instruction_pointer + 6, 2)
-                p2 = bus.io(0, a_p2, 2)
+            elif reg1 == 1:
+                # Load ptr to p2 into register, then deref into register
+                reg4 = bus.io(0, instruction_pointer + 6, 2)
+                reg4 = bus.io(0, reg4, 2)
 
             else:
-                processor_msg(9, o_mode)
+                processor_msg(9, reg2)
                 quit()
 
             # Direct output
-            if o_mode == 0:
-                out = bus.io(0, instruction_pointer + 8, 2)
-                bus.io(1, out, p1 * p2)
+            if reg2 == 0:
+                # Load out addr into register
+                reg5 = bus.io(0, instruction_pointer + 8, 2)  # out
 
             # Pointer output
-            elif o_mode == 1:
-                a_out = bus.io(0, instruction_pointer + 8, 2)
-                out = bus.io(0, a_out, 2)
-                bus.io(1, out, p1 * p2)
+            elif reg2 == 1:
+                # Load ptr to out addr into register, then deref
+                reg5 = bus.io(0, instruction_pointer + 8, 2)
+                reg5 = bus.io(0, reg5, 2)
 
             else:
-                processor_msg(10, o_mode)
+                processor_msg(10, reg2)
                 quit()
+
+            # Multiply reg3 and reg4, store in reg6
+            reg6 = reg3 * reg4
+
+            # Write contents of reg6 to memory at addr reg5
+            bus.io(1, reg5, reg6)
 
         # Copy
         elif opcode == 3:
-            i_mode = bus.io(0, instruction_pointer + 1, 1)
-            o_mode = bus.io(0, instruction_pointer + 2, 1)
+            # Load parameter modes into registers
+            reg0 = bus.io(0, instruction_pointer + 1, 1)  # i_mode
+            reg1 = bus.io(0, instruction_pointer + 2, 1)  # o_mode
 
             # Direct mode
-            if i_mode == 0:
-                p1 = bus.io(0, instruction_pointer + 3, 2)
+            if reg0 == 0:
+                # Load p1 into register
+                reg2 = bus.io(0, instruction_pointer + 3, 2)  # p1
 
             # Pointer mode
-            elif i_mode == 1:
-                a_p1 = bus.io(0, instruction_pointer + 3, 2)
-                p1 = bus.io(0, a_p1, 2)
+            elif reg0 == 1:
+                # Load ptr to p1 into register, and deref
+                reg2 = bus.io(0, instruction_pointer + 3, 2)  # a_p1
+                reg2 = bus.io(0, reg2, 2)                       # p1
 
             else:
-                processor_msg(9, i_mode)
+                processor_msg(9, reg0)
                 quit()
 
             # Direct output mode
-            if o_mode == 0:
-                out = bus.io(0, instruction_pointer + 5, 2)
-                bus.io(1, out, p1)
+            if reg1 == 0:
+                # Load out addr into register
+                reg3 = bus.io(0, instruction_pointer + 5, 2)  # out
+                #bus.io(1, reg3, reg2)
 
             # Pointer output mode
-            elif o_mode == 1:
-                a_out = bus.io(0, instruction_pointer + 5, 2)
-                out = bus.io(0, a_out, 2)
-                bus.io(1, out, p1)
+            elif reg1 == 1:
+                # Load ptr to out addr into register, then deref
+                reg3 = bus.io(0, instruction_pointer + 5, 2)  # a_out
+                reg3 = bus.io(0, reg3, 2)                      # out
+                #bus.io(1, reg3, reg2)
 
             else:
-                processor_msg(10, o_mode)
+                processor_msg(10, reg1)
                 quit()
+
+            # Write the contents of reg2 into addr in reg3
+            bus.io(1, reg3, reg2)
 
         # Move
         elif opcode == 4:
-            i_mode = bus.io(0, instruction_pointer + 1, 1)
-            o_mode = bus.io(0, instruction_pointer + 2, 1)
+            # Load parameter modes into registers
+            reg0 = bus.io(0, instruction_pointer + 1, 1)  # i_mode
+            reg1 = bus.io(0, instruction_pointer + 2, 1)  # o_mode
 
             # Move does not have a direct mode, since there is nowhere to move a literal from!
             # Pointer mode
-            if i_mode == 0:
-                a_p1 = bus.io(0, instruction_pointer + 3, 2)
-                p1 = bus.io(0, a_p1, 2)
+            if reg0 == 0:
+                # Load ptr to p1 into register, and deref into reg3, since we need to know the address to delete
+                reg2 = bus.io(0, instruction_pointer + 3, 2)  # a_p1
+                reg3 = bus.io(0, reg2, 2)                     # p1
 
-                # The delete portion of the move instruction
-                bus.io(1, a_p1, 0)
+                #bus.io(1, reg2, 0)
 
             # Double pointer mode
-            elif i_mode == 1:
-                aa_p1 = bus.io(0, instruction_pointer + 3, 2)
-                a_p1 = bus.io(0, aa_p1, 2)
-                p1 = bus.io(0, a_p1, 2)
+            elif reg0 == 1:
+                # Load ptr to ptr to p1 into register, deref twice
+                reg2 = bus.io(0, instruction_pointer + 3, 2)  # aa_p1
+                reg2 = bus.io(0, reg2, 2)                     # a_p1
+                reg3 = bus.io(0, reg2, 2)                        # p1
 
-                # The delete portion of the move instruction
-                bus.io(1, a_p1, 0)
+                #bus.io(1, reg2, 0)
 
             else:
-                processor_msg(9, i_mode)
+                processor_msg(9, reg0)
                 quit()
 
             # Direct output mode
-            if o_mode == 0:
-                out = bus.io(0, instruction_pointer + 5, 2)
-                bus.io(1, out, p1)
+            if reg1 == 0:
+                # Load out addr into register
+                reg4 = bus.io(0, instruction_pointer + 5, 2)  # out
+                #bus.io(1, reg4, reg3)
 
             # Pointer output mode
-            elif o_mode == 1:
-                a_out = bus.io(0, instruction_pointer + 5, 2)
-                out = bus.io(0, a_out, 2)
-                bus.io(1, out, p1)
+            elif reg1 == 1:
+                # Load ptr to out addr into register and deref
+                reg4 = bus.io(0, instruction_pointer + 5, 2)  # a_out
+                reg4 = bus.io(0, reg4, 2)
+                #bus.io(1, reg4, reg3)
 
             else:
-                processor_msg(10, o_mode)
+                processor_msg(10, reg1)
                 quit()
+
+            # Write the contents of reg3 to the addr in reg4
+            bus.io(1, reg4, reg3)
+
+            # Clear the contents of reg2
+            # This is the delete portion of the move instruction
+            bus.io(1, reg2, 0)
 
         # Terminate execution successfully
         elif opcode == 5:
             processor_msg(0)
 
         # Display value
+        # This instruction is magic, and is for debugging the processor
+        # Eventually, it may be removed
         elif opcode == 6:
-            i_mode = bus.io(0, instruction_pointer + 1, 1)
+            # Load input mode into register
+            reg0 = bus.io(0, instruction_pointer + 1, 1)  # i_mode
 
             # Direct mode
-            if i_mode == 0:
-                p1 = bus.io(0, instruction_pointer + 2, 2)
-                print(p1)
+            if reg0 == 0:
+                # Load p1 into register
+                reg1 = bus.io(0, instruction_pointer + 2, 2)  # p1
+                #print(reg1)
 
             # Pointer mode
-            elif i_mode == 1:
-                a_p1 = bus.io(0, instruction_pointer + 2, 2)
-                p1 = bus.io(0, a_p1, 2)
-                print(p1)
+            elif reg0 == 1:
+                # Load ptr to p1 into register, then deref
+                reg1 = bus.io(0, instruction_pointer + 2, 2)  # a_p1
+                reg1 = bus.io(0, reg1, 2)                       # p1
+                #print(reg1)
 
             else:
                 processor_msg(9, i_mode)
                 quit()
 
+            # Call Python print and output to console for debugging purposes
+            print(reg1)
+
         # Jump
         elif opcode == 7:
-            jmp_mode = bus.io(0, instruction_pointer + 1, 1)
+            # Load parameter mode into register
+            reg0 = bus.io(0, instruction_pointer + 1, 1)  # jmp_mode
 
             # Direct jump
-            if jmp_mode == 0 or jmp_mode == 2:
-                a_jmp = bus.io(0, instruction_pointer + 2, 2)
+            if reg0 == 0 or reg0 == 2:
+                # Load jmp addr into register
+                reg1 = bus.io(0, instruction_pointer + 2, 2)  # a_jmp
 
             # Pointer jump
-            elif jmp_mode == 1 or jmp_mode == 3:
-                aa_jmp = bus.io(0, instruction_pointer + 2, 2)
-                a_jmp = bus.io(0, aa_jmp, 2)
+            elif reg0 == 1 or reg0 == 3:
+                # Load ptr to jmp addr into register, then deref
+                reg1 = bus.io(0, instruction_pointer + 2, 2)  # aa_jmp
+                reg1 = bus.io(0, reg1, 2)                     # a_jmp
 
             else:
-                processor_msg(9, jmp_mode)
+                processor_msg(9, reg0)
                 quit()
 
             # Normal jump
-            if jmp_mode == 0 or jmp_mode == 1:
-                instruction_pointer = a_jmp - parameter_bytes - 1
+            if reg0 == 0 or reg0 == 1:
+                instruction_pointer = reg1 - parameter_bytes - 1
 
             # Relative jump
-            elif jmp_mode == 2 or jmp_mode == 3:
-                instruction_pointer += a_jmp
+            elif reg0 == 2 or reg0 == 3:
+                instruction_pointer += reg1
 
         # Jump if null
         elif opcode == 8:
-            jmp_mode = bus.io(0, instruction_pointer + 1, 1)
-            p1_mode = bus.io(0, instruction_pointer + 2, 1)
+            # Load parameter modes into registers
+            reg0 = bus.io(0, instruction_pointer + 1, 1)  # jmp_mode
+            reg1 = bus.io(0, instruction_pointer + 2, 1)  # p1_mode
 
             # Direct jump
-            if jmp_mode == 0 or jmp_mode == 2:
-                a_jmp = bus.io(0, instruction_pointer + 3, 2)
+            if reg0 == 0 or reg0 == 2:
+                # Load jmp addr into register
+                reg2 = bus.io(0, instruction_pointer + 3, 2)  # a_jmp
 
             # Pointer jump
-            elif jmp_mode == 1 or jmp_mode == 3:
-                aa_jmp = bus.io(0, instruction_pointer + 3, 2)
-                a_jmp = bus.io(0, aa_jmp, 2)
+            elif reg0 == 1 or reg0 == 3:
+                # Load ptr to jmp addr into register, and deref
+                reg2 = bus.io(0, instruction_pointer + 3, 2)  # aa_jmp
+                reg2 = bus.io(0, reg2, 2)                     # a_jmp
 
             else:
-                processor_msg(9, jmp_mode)
+                processor_msg(9, reg0)
                 quit()
 
             # Literal param
-            if p1_mode == 0:
-                p1 = bus.io(0, instruction_pointer + 5, 2)
+            if reg1 == 0:
+                # Load p1 into register
+                reg3 = bus.io(0, instruction_pointer + 5, 2)  # p1
 
             # Pointer param
-            elif p1_mode == 1:
-                a_p1 = bus.io(0, instruction_pointer + 5, 2)
-                p1 = bus.io(0, a_p1, 2)
+            elif reg1 == 1:
+                # Load ptr to p1 into register, and deref
+                reg3 = bus.io(0, instruction_pointer + 5, 2)  # a_p1
+                reg3 = bus.io(0, reg3, 2)                       # p1
 
             else:
-                processor_msg(9, p1_mode)
+                processor_msg(9, reg1)
                 quit()
 
             # Jump if param1 is null (zero)
-            if p1 == 0:
+            if reg3 == 0:
                 # Normal jump
-                if jmp_mode == 0 or jmp_mode == 1:
-                    instruction_pointer = a_jmp - parameter_bytes - 1
+                if reg0 == 0 or reg0 == 1:
+                    instruction_pointer = reg2 - parameter_bytes - 1
 
                 # Relative jump
-                elif jmp_mode == 2 or jmp_mode == 3:
-                    instruction_pointer += a_jmp
+                elif reg0 == 2 or reg0 == 3:
+                    instruction_pointer += reg2
 
         # Jump if equal
         elif opcode == 9:
-            jmp_mode = bus.io(0, instruction_pointer + 1, 1)
-            p1_mode = bus.io(0, instruction_pointer + 2, 1)
-            p2_mode = bus.io(0, instruction_pointer + 3, 1)
+            # Load parameter modes into registers
+            reg0 = bus.io(0, instruction_pointer + 1, 1)  # jmp_mode
+            reg1 = bus.io(0, instruction_pointer + 2, 1)  # p1_mode
+            reg2 = bus.io(0, instruction_pointer + 3, 1)  # p2_mode
 
             # Direct jump
-            if jmp_mode == 0 or jmp_mode == 2:
-                a_jmp = bus.io(0, instruction_pointer + 4, 2)
+            if reg0 == 0 or reg0 == 2:
+                # Load jmp addr into register
+                reg3 = bus.io(0, instruction_pointer + 4, 2)  # a_jmp
 
             # Pointer jump
-            elif jmp_mode == 1 or jmp_mode == 3:
-                aa_jmp = bus.io(0, instruction_pointer + 4, 2)
-                a_jmp = bus.io(0, aa_jmp, 2)
+            elif reg0 == 1 or reg0 == 3:
+                # Load ptr to jmp addr into register and deref
+                reg3 = bus.io(0, instruction_pointer + 4, 2)  # aa_jmp
+                reg3 = bus.io(0, reg3, 2)                     # a_jmp
 
             else:
-                processor_msg(9, jmp_mode)
+                processor_msg(9, reg0)
 
             # Literal param
-            if p1_mode == 0:
-                p1 = bus.io(0, instruction_pointer + 6, 2)
+            if reg1 == 0:
+                # Load p1 into register
+                reg4 = bus.io(0, instruction_pointer + 6, 2)  # p1
 
             # Pointer param
-            elif p1_mode == 1:
-                a_p1 = bus.io(0, instruction_pointer + 6, 2)
-                p1 = bus.io(0, a_p1, 2)
+            elif reg1 == 1:
+                # Load ptr to p1 into register, and deref
+                reg4 = bus.io(0, instruction_pointer + 6, 2)  # aa_p1
+                reg4 = bus.io(0, reg4, 2)                       # a_p1
 
             else:
-                processor_msg(9, p1_mode)
+                processor_msg(9, reg1)
                 quit()
 
             # Literal param
-            if p2_mode == 0:
-                p2 = bus.io(0, instruction_pointer + 8, 2)
+            if reg2 == 0:
+                # Load p2 into register
+                reg5 = bus.io(0, instruction_pointer + 8, 2)  # p2
 
             # Pointer param
-            elif p2_mode == 1:
-                a_p2 = bus.io(0, instruction_pointer + 8, 2)
-                p2 = bus.io(0, a_p2, 2)
+            elif reg2 == 1:
+                # Load ptr to p2 into register, then deref
+                reg5 = bus.io(0, instruction_pointer + 8, 2)  # a_p2
+                reg5 = bus.io(0, reg5, 2)                       # p2
 
             else:
-                processor_msg(9, p1_mode)
+                processor_msg(9, reg1)
                 quit()
 
             # Jump if given params are equal
-            if p1 == p2:
+            if reg4 == reg5:
                 # Normal jump
-                if jmp_mode == 0 or jmp_mode == 1:
-                    instruction_pointer = a_jmp - parameter_bytes - 1
+                if reg0 == 0 or reg0 == 1:
+                    instruction_pointer = reg3 - parameter_bytes - 1
 
-                elif jmp_mode == 2 or jmp_mode == 3:
-                    instruction_pointer += a_jmp
+                elif reg0 == 2 or reg0 == 3:
+                    instruction_pointer += reg3
 
         # Terminate with error
         elif opcode == 10:
@@ -452,39 +526,49 @@ def process_instructions(program):
 
         # Copy block
         elif opcode == 11:
-            i_mode = bus.io(0, instruction_pointer + 1, 1)
-            o_mode = bus.io(0, instruction_pointer + 2, 1)
-            size = bus.io(0, instruction_pointer + 3, 1)
+            # Load parameter modes into registers
+            reg0 = bus.io(0, instruction_pointer + 1, 1)  # i_mode
+            reg1 = bus.io(0, instruction_pointer + 2, 1)  # o_mode
+
+            # Load size parameter into register
+            reg2 = bus.io(0, instruction_pointer + 3, 1)  # size
 
             # Direct mode
-            if i_mode == 0:
-                a_p1 = bus.io(0, instruction_pointer + 4, 2)
-                p1 = bus.io(0, a_p1, size)
+            if reg0 == 0:
+                # Load ptr to p1 into register and deref
+                reg3 = bus.io(0, instruction_pointer + 4, 2)  # a_p1
+                reg3 = bus.io(0, reg3, reg2)                    # p1
 
             # Pointer mode
-            elif i_mode == 1:
-                aa_p1 = bus.io(0, instruction_pointer + 4, 2)
-                a_p1 = bus.io(0, aa_p1, 2)
-                p1 = bus.io(0, a_p1, size)
+            elif reg0 == 1:
+                # Load ptr to ptr to p1 into register and deref twice
+                reg3 = bus.io(0, instruction_pointer + 4, 2)  # aa_p1
+                reg3 = bus.io(0, reg3, 2)                     # a_p1
+                reg3 = bus.io(0, reg3, reg2)                  # p1
 
             else:
-                processor_msg(9, i_mode)
+                processor_msg(9, reg0)
                 quit()
 
             # Direct output mode
-            if o_mode == 0:
-                out = bus.io(0, instruction_pointer + 6, 2)
-                bus.io(1, out, p1)
+            if reg1 == 0:
+                # Load out addr into register
+                reg4 = bus.io(0, instruction_pointer + 6, 2)  # out
 
             # Pointer output mode
-            elif o_mode == 1:
-                a_out = bus.io(0, instruction_pointer + 6, 2)
-                out = bus.io(0, a_out, 2)
-                bus.io(1, out, p1)
+            elif reg1 == 1:
+                # Load ptr to out addr into register and deref
+                reg4 = bus.io(0, instruction_pointer + 6, 2)  # a_out
+                reg4 = bus.io(0, reg4, 2)                     # out
 
             else:
                 processor_msg(10, o_mode)
                 quit()
+
+            # Write contents of reg3 into addr in reg4
+            # This is slightly cheating since reg3 currently contains a block of memory, not a value
+            # TODO: de-magic the CPYBLK instruction
+            bus.io(1, reg4, reg3)
 
         # Move block
         elif opcode == 12:
@@ -493,97 +577,119 @@ def process_instructions(program):
 
         # Modulo
         elif opcode == 13:
-            p1_mode = bus.io(0, instruction_pointer + 1, 1)
-            p2_mode = bus.io(0, instruction_pointer + 2, 1)
-            o_mode = bus.io(0, instruction_pointer + 3, 1)
+            # Load parameter modes into registers
+            reg0 = bus.io(0, instruction_pointer + 1, 1)  # p1 mode
+            reg1 = bus.io(0, instruction_pointer + 2, 1)  # p2 mode
+            reg2 = bus.io(0, instruction_pointer + 3, 1)  # o mode
 
             # Direct p1 mode
-            if p1_mode == 0:
-                p1 = bus.io(0, instruction_pointer + 4, 2)
+            if reg0 == 0:
+                # Load p1 into register
+                reg3 = bus.io(0, instruction_pointer + 4, 2)  # p1
 
             # Pointer p1 mode
-            elif p1_mode == 1:
-                a_p1 = bus.io(0, instruction_pointer + 4, 2)
-                p1 = bus.io(0, a_p1, 2)
+            elif reg0 == 1:
+                # Load ptr to p1 into register, then dereference into register
+                reg3 = bus.io(0, instruction_pointer + 4, 2)
+                reg3 = bus.io(0, reg3, 2)
 
             else:
-                processor_msg(9, o_mode)
+                processor_msg(9, reg2)
                 quit()
 
             # Direct p2 mode
-            if p2_mode == 0:
-                p2 = bus.io(0, instruction_pointer + 6, 2)
+            if reg1 == 0:
+                # Load p2 into register
+                reg4 = bus.io(0, instruction_pointer + 6, 2)  # p2
 
             # Pointer p2 mode
-            elif p2_mode == 1:
-                a_p2 = bus.io(0, instruction_pointer + 6, 2)
-                p2 = bus.io(0, a_p2, 2)
+            elif reg1 == 1:
+                # Load ptr to p2 into register, then deref into register
+                reg4 = bus.io(0, instruction_pointer + 6, 2)
+                reg4 = bus.io(0, reg4, 2)
 
             else:
-                processor_msg(9, o_mode)
+                processor_msg(9, reg2)
                 quit()
 
             # Direct output
-            if o_mode == 0:
-                out = bus.io(0, instruction_pointer + 8, 2)
-                bus.io(1, out, p1 % p2)
+            if reg2 == 0:
+                # Load out addr into register
+                reg5 = bus.io(0, instruction_pointer + 8, 2)  # out
 
             # Pointer output
-            elif o_mode == 1:
-                a_out = bus.io(0, instruction_pointer + 8, 2)
-                out = bus.io(0, a_out, 2)
-                bus.io(1, out, p1 % p2)
+            elif reg2 == 1:
+                # Load ptr to out addr into register, then deref
+                reg5 = bus.io(0, instruction_pointer + 8, 2)
+                reg5 = bus.io(0, reg5, 2)
 
             else:
-                processor_msg(10, o_mode)
+                processor_msg(10, reg2)
                 quit()
+
+            # Modulo reg3 and reg4, store in reg6
+            reg6 = reg3 % reg4
+
+            # Write contents of reg6 to memory at addr reg5
+            bus.io(1, reg5, reg6)
 
         # Division
         elif opcode == 14:
-            p1_mode = bus.io(0, instruction_pointer + 1, 1)
-            p2_mode = bus.io(0, instruction_pointer + 2, 1)
-            o_mode = bus.io(0, instruction_pointer + 3, 1)
+            # Load parameter modes into registers
+            reg0 = bus.io(0, instruction_pointer + 1, 1)  # p1 mode
+            reg1 = bus.io(0, instruction_pointer + 2, 1)  # p2 mode
+            reg2 = bus.io(0, instruction_pointer + 3, 1)  # o mode
 
             # Direct p1 mode
-            if p1_mode == 0:
-                p1 = bus.io(0, instruction_pointer + 4, 2)
+            if reg0 == 0:
+                # Load p1 into register
+                reg3 = bus.io(0, instruction_pointer + 4, 2)  # p1
 
             # Pointer p1 mode
-            elif p1_mode == 1:
-                a_p1 = bus.io(0, instruction_pointer + 4, 2)
-                p1 = bus.io(0, a_p1, 2)
+            elif reg0 == 1:
+                # Load ptr to p1 into register, then dereference into register
+                reg3 = bus.io(0, instruction_pointer + 4, 2)
+                reg3 = bus.io(0, reg3, 2)
 
             else:
-                processor_msg(9, o_mode)
+                processor_msg(9, reg2)
                 quit()
 
             # Direct p2 mode
-            if p2_mode == 0:
-                p2 = bus.io(0, instruction_pointer + 6, 2)
+            if reg1 == 0:
+                # Load p2 into register
+                reg4 = bus.io(0, instruction_pointer + 6, 2)  # p2
 
             # Pointer p2 mode
-            elif p2_mode == 1:
-                a_p2 = bus.io(0, instruction_pointer + 6, 2)
-                p2 = bus.io(0, a_p2, 2)
+            elif reg1 == 1:
+                # Load ptr to p2 into register, then deref into register
+                reg4 = bus.io(0, instruction_pointer + 6, 2)
+                reg4 = bus.io(0, reg4, 2)
 
             else:
-                processor_msg(9, o_mode)
+                processor_msg(9, reg2)
                 quit()
 
             # Direct output
-            if o_mode == 0:
-                out = bus.io(0, instruction_pointer + 8, 2)
-                bus.io(1, out, p1 // p2)
+            if reg2 == 0:
+                # Load out addr into register
+                reg5 = bus.io(0, instruction_pointer + 8, 2)  # out
 
             # Pointer output
-            elif o_mode == 1:
-                a_out = bus.io(0, instruction_pointer + 8, 2)
-                out = bus.io(0, a_out, 2)
-                bus.io(1, out, p1 // p2)
+            elif reg2 == 1:
+                # Load ptr to out addr into register, then deref
+                reg5 = bus.io(0, instruction_pointer + 8, 2)
+                reg5 = bus.io(0, reg5, 2)
 
             else:
-                processor_msg(10, o_mode)
+                processor_msg(10, reg2)
                 quit()
+
+            # Divide reg3 and reg4, store in reg6
+            reg6 = reg3 // reg4
+
+            # Write contents of reg6 to memory at addr reg5
+            bus.io(1, reg5, reg6)
 
         else:
             processor_msg(3, opcode, "at", instruction_pointer, "[EXHAUSTED]")
