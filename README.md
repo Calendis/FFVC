@@ -31,3 +31,10 @@ To-do list
 * Processor clock cycle
 * De-map display registers
 * Support access of non-mapped registers
+
+What is NOT simulated
+-
+* Hardware circuitry
+  * CPU voltages
+  * Display scanlines
+  * etc.
