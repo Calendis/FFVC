@@ -379,7 +379,7 @@ def process_instructions(program):
                 #print(reg1)
 
             else:
-                processor_msg(9, i_mode)
+                processor_msg(9, reg0)
                 quit()
 
             # Call Python print and output to console for debugging purposes
@@ -562,7 +562,7 @@ def process_instructions(program):
                 reg4 = bus.io(0, reg4, 2)                     # out
 
             else:
-                processor_msg(10, o_mode)
+                processor_msg(10, reg1)
                 quit()
 
             # Write contents of reg3 into addr in reg4
