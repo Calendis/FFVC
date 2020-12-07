@@ -7,6 +7,7 @@ Current features:<br>
   * 8 general-purpose registers
   * 15 instructions
 * Memory
+  * Fully contiguous bytes
 * Bus
 * Display
   * Font support
@@ -21,3 +22,9 @@ How to use
 -
 Run computer_interface.py. This currently serves as a very basic
 "operating system" for the computer.
+
+To-do list
+-
+* Input/processor interrupts
+* Audio
+* More peripherals
