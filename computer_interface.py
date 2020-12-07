@@ -17,7 +17,7 @@ mode_bound = bus.vid.mode_bound
 ram_bound = bus.mapping["vram"][0]
 
 
-def bios_msg(status_code, *args):
+def os_msg(status_code, *args):
     status_messages = [
         "Booting...",
         "File not found",
@@ -29,12 +29,12 @@ def bios_msg(status_code, *args):
     else:
         msg = status_messages[status_code]
 
-    print("BIOS message:", msg, *args)
+    print("OS message:", msg, *args)
 
 
 def power_on():
     # Show boot message
-    bios_msg(0)
+    os_msg(0)
 
     # Load default palette
     default_palette = open("files/default_palette.txt", 'r').read().split('\n')
@@ -97,13 +97,13 @@ def await_input():
         elif x == "loadprog":
             path = input(" path: ")
             if not os.path.isfile(path):
-                bios_msg(1)
+                os_msg(1)
                 quit()
 
             prog = open(path, 'rb').read()
             header = prog[:4]
             if header[:3].decode("ASCII", "ignore") != "9I6":
-                bios_msg(2, *header)
+                os_msg(2, *header)
                 quit()
 
             prog = prog[4:]  # Discard the 4-byte header
