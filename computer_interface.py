@@ -1,5 +1,5 @@
 """
-    This script serves as a very basic magic "operating system" for the FVC (Fun Virtual Computer).
+    This script serves as a very basic magic BIOS and "operating system" for the FVC (Fun Virtual Computer).
     In the future, I will write the operating system on the computer itself rather than in Python
 """
 import os
@@ -29,7 +29,7 @@ def os_msg(status_code, *args):
     else:
         msg = status_messages[status_code]
 
-    print("OS message:", msg, *args)
+    print("Message:", msg, *args)
 
 
 def power_on():
@@ -66,6 +66,7 @@ def power_on():
     # Play test sound
     pass
 
+    # Start the operating system
     await_input()
 
 

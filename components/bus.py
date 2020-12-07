@@ -74,6 +74,7 @@ def io(signal, location, size_or_val):
             bus_msg(2, location)
             quit()
 
+        # Convert to bytes
         if type(size_or_val) != bytearray and type(size_or_val) != bytes:
             val_size = max(1, ceil(size_or_val.bit_length() / 8))
             size_or_val = size_or_val.to_bytes(val_size, "little")

@@ -53,6 +53,8 @@ class Screen:
         self.true_resolution = (true_width, true_height)
         self.palette = bytearray(8)
         self.mode = bytearray(1)
+        self.line = 0
+        self.x = 0
 
         # Useful magic numbers
         self.colour_bound = 24000
@@ -160,7 +162,7 @@ class Screen:
 
         # Text mode
         elif self.mode[0] == 1:
-            y = bus.io(0, 22, 1)
+            #y = bus.io(0, 22, 1)
             font_location_offset = 500
 
             # Read the font from memory
@@ -186,7 +188,7 @@ class Screen:
             chars_per_line = self.true_resolution[0] // 8
             chars_per_column = self.true_resolution[1] // 8
 
-            x = 0
+            #x = 0
             # Iterate over each character ID
             for c in text_data:
                 # Catch control characters
@@ -196,19 +198,21 @@ class Screen:
 
                 # Newline
                 elif c == 0x05:
-                    bus.io(1, 22, y + 1)
-                    x = 0
+                    #bus.io(1, 22, y + 1)
+                    self.line += 1
+                    self.x = 0
                     continue
 
                 # Home
                 elif c == 0x0e:
-                    bus.io(1, 22, 0)
-                    x = 0
+                    #bus.io(1, 22, 0)
+                    self.line = 0
+                    self.x = 0
                     continue
 
                 gx = 0
                 gy = 0
-                y = bus.io(0, 22, 1)
+                #y = bus.io(0, 22, 1)
 
                 # Make sure the loaded font supports the current character
                 try:
@@ -250,18 +254,20 @@ class Screen:
                     gy += 1
                     gx = 0
 
-                self.surface.blit(glyph_surface, (8 * x, 8 * y))
-                x += 1
+                self.surface.blit(glyph_surface, (8 * self.x, 8 * self.line))
+                self.x += 1
 
                 # If we have reached the end of the line...
-                if x >= chars_per_line:
+                if self.x >= chars_per_line:
                     # Increment the line register and reset the x pos
-                    bus.io(1, 22, y + 1)
-                    x = 0
+                    #bus.io(1, 22, y + 1)
+                    self.line += 1
+                    self.x = 0
 
                 # Wrap the line register if we try to draw text beyond the bottom of the screen
-                if y >= chars_per_column:
-                    bus.io(1, 22, 0)
+                if self.line >= chars_per_column:
+                    #bus.io(1, 22, 0)
+                    self.line = 0
 
         else:
             display_msg(1, self.mode)
