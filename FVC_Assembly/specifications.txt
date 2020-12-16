@@ -58,9 +58,9 @@ PROGRAMMING:
 Line numbers must prefix each line. They can be any non-negative integer, but they must be in order from lowest to
 highest.
 
-Each line must either be blank (ignored by the assembler), or contain a line number, an operator, and a number of
+Each line must either be blank/commented (ignored by the assembler), or contain a line number, an operator, and a number of
 parameters. Parameters can either be an ptr/double ptr, in which case they are prefixed with '$', a literal/ptr, in
-which case they are prefixed with '#', or a string, in which case they are prefixed with '. Mode parameters are INFERRED
+which case they are prefixed with '#', or a string/line, in which case they are prefixed with '. Mode parameters are INFERRED
 by the assembler using the '$' and '#' symbols. Comments do not have a line number and start with a single forward
 slash.
 

@@ -50,9 +50,10 @@ def print_err(code, line, *info):
     This dictionary maps operators to their required number of parameters, the machine opcode they
     are converted to, and the number of mode parameters used by the processor for this instruction
 """
+
 ops_params_bytecode = {
     "ADD": [3, 0x01, 3],
-    "MULT": [3, 0x02, 2],
+    "MULT": [3, 0x02, 3],
     "COPY": [2, 0x03, 2],
     "MOVE": [2, 0x04, 2],
     "DONE": [0, 0x05, 0],
@@ -65,9 +66,29 @@ ops_params_bytecode = {
     "CPYBLK": [2, 0x0B, 3],
     "MOD": [3, 0x0D, 3],
     "DIV": [3, 0x0E, 3],
-    "GOTO": [1, 0x07, 0],
-    "GTNUL": [2, 0x08, 1],
-    "GTEQL": [3, 0x09, 2]
+    "GOTO": [1, 0x07, 1],
+    "GTNUL": [2, 0x08, 2],
+    "GTEQL": [3, 0x09, 3]
+}
+
+ops_length = {
+    "ADD":  9,
+    "MULT": 9,
+    "COPY": 6,
+    "MOVE": 6,
+    "DONE": 0,
+    "META": 3,
+    "JMP":  3,
+    "JMPNUL": 6,
+    "JMPEQL": 9,
+    "ERR": 0,
+    "PRINT": 6,
+    "CPYBLK": 8,
+    "MOD": 9,
+    "DIV": 9,
+    "GOTO": 3,
+    "GTNUL": 6,
+    "GTEQL": 9
 }
 
 keyword_params_bytecode = {
@@ -179,8 +200,11 @@ def compile_fvcal(assembly, out_path):
             last_number = int(number)
 
             line_address_map[number] = address
-            address += ops_params_bytecode[op][0]*2 + ops_params_bytecode[op][2]
-
+            address += ops_length[op] + 1
+    
+    print("Assembled line-address map.")
+    print(line_address_map)
+    
     # Code is valid, convert to machine code :)
     print("Code validated, compiling...")
     machine_code = bytearray()
