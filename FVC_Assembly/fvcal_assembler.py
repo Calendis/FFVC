@@ -10,7 +10,7 @@ from sys import argv
 from os import path
 from time import time
 
-ASSEMBLER_VERSION = 2
+ASSEMBLER_VERSION = 3
 HEADER = bytearray([0x39, 0x49, 0x36, ASSEMBLER_VERSION])
 
 
