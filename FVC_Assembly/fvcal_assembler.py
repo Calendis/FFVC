@@ -82,7 +82,7 @@ ops_length = {
     "JMPNUL": 6,
     "JMPEQL": 9,
     "ERR": 0,
-    "PRINT": 6,
+    "PRINT": 8,
     "CPYBLK": 8,
     "MOD": 9,
     "DIV": 9,
@@ -199,11 +199,8 @@ def compile_fvcal(assembly, out_path):
             validate_line(number, op, params, last_number)
             last_number = int(number)
 
-            line_address_map[number] = address
+            line_address_map[number] = address            
             address += ops_length[op] + 1
-    
-    print("Assembled line-address map.")
-    print(line_address_map)
     
     # Code is valid, convert to machine code :)
     print("Code validated, compiling...")

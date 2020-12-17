@@ -130,7 +130,7 @@ def process_instructions(program):
     # In the future, a clock and fetch-decode-execute cycle should be implemented
     processor_msg(4, "running program...")
     while opcode != 5:
-
+        
         # Get the opcode from program memory (one byte)
         opcode = bus.io(0, instruction_pointer, 1)
 

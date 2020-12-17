@@ -28,10 +28,8 @@
 50 ADD    #1 $300 #300
 
 / If counter is high enough, jump ahead...
-60 JMPEQL %4 $300 #1000
-/ 60 GTEQL $300 #1000 '80
+60 GTEQL $300 #1000 '80
 / ...else, jump back
-/ 70 JMP    #39
 70 GOTO '10
 80 DONE
 

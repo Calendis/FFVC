@@ -17,12 +17,9 @@
 45 ADD #1 $PAL #PAL
 
 / If done, jump ahead
-/ 50 JMPEQL %4 $200 #255
-/ 50 GTEQL '70 $200 #255
 50 GTEQL $200 #255 '70
 
 / Else, jump to beginning of program
-/ 60 JMP    #46
 60 GOTO '20
 
 70 DONE
