@@ -10,7 +10,7 @@ from sys import argv
 from os import path
 from time import time
 
-ASSEMBLER_VERSION = 3
+ASSEMBLER_VERSION = 4
 HEADER = bytearray([0x39, 0x49, 0x36, ASSEMBLER_VERSION])
 
 
@@ -82,8 +82,8 @@ ops_length = {
     "JMPNUL": 6,
     "JMPEQL": 9,
     "ERR": 0,
-    "PRINT": 8,
-    "CPYBLK": 8,
+    "PRINT": 7,
+    "CPYBLK": 7,
     "MOD": 9,
     "DIV": 9,
     "GOTO": 3,
@@ -198,9 +198,26 @@ def compile_fvcal(assembly, out_path):
 
             validate_line(number, op, params, last_number)
             last_number = int(number)
-
+            
+            pread = address
+            # Account for string literals taking up address spaces
+            if op == "PRINT" and params[0][0] == '\'':
+                address += ops_length["JMP"] + 1
+                address += len(params[0]) - 1
+                
+            #  Helps debug the assembler
+            #print("Line:", number)
+            #print("Pre-addr:", pread)
+            #print("True addr:", address)
+            #print("Op:", op)
+            #print(' ', "len:", ops_length[op] + 1, '\n')
+            
             line_address_map[number] = address            
             address += ops_length[op] + 1
+    
+    #  Print the line-address map
+    #  This also helps with debugging
+    #print(line_address_map)
     
     # Code is valid, convert to machine code :)
     print("Code validated, compiling...")
@@ -252,10 +269,10 @@ def compile_fvcal(assembly, out_path):
                     expanded_bytes.append(FVCTE_table[current_letter])
 
                 # Insert a cpyblk to copy the text data into VRAM
-                expanded_bytes.append(0x0B)
-                expanded_bytes.append(0x00)
-                expanded_bytes.append(0x00)
-                expanded_bytes.append(strlen)
+                expanded_bytes.append(0x0B)    # CPYBLK
+                expanded_bytes.append(0x00)    # Direct in
+                expanded_bytes.append(0x00)    # Direct out
+                expanded_bytes.append(strlen)  # Size
 
                 # Calculate the address where the text data is stored in the binary
                 current_address = len(machine_code) + len(expanded_bytes) + 28 - strlen

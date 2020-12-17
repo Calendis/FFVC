@@ -1,0 +1,11 @@
+/ Initialize addr 250 to 0
+10 COPY #0 #250
+20 PRINT 'INIT
+
+25 PRINT 'TEST
+30 GTEQL $250 #5 '60
+
+/ Increment addr 250
+40 ADD #1 $250 #250
+50 GOTO '25
+60 DONE
