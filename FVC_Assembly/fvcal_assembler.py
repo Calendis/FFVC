@@ -10,7 +10,7 @@ from sys import argv
 from os import path
 from time import time
 
-ASSEMBLER_VERSION = 2
+ASSEMBLER_VERSION = 4
 HEADER = bytearray([0x39, 0x49, 0x36, ASSEMBLER_VERSION])
 
 
@@ -50,9 +50,10 @@ def print_err(code, line, *info):
     This dictionary maps operators to their required number of parameters, the machine opcode they
     are converted to, and the number of mode parameters used by the processor for this instruction
 """
+
 ops_params_bytecode = {
     "ADD": [3, 0x01, 3],
-    "MULT": [3, 0x02, 2],
+    "MULT": [3, 0x02, 3],
     "COPY": [2, 0x03, 2],
     "MOVE": [2, 0x04, 2],
     "DONE": [0, 0x05, 0],
@@ -65,9 +66,29 @@ ops_params_bytecode = {
     "CPYBLK": [2, 0x0B, 3],
     "MOD": [3, 0x0D, 3],
     "DIV": [3, 0x0E, 3],
-    "GOTO": [1, 0x07, 0],
-    "GTNUL": [2, 0x08, 1],
-    "GTEQL": [3, 0x09, 2]
+    "GOTO": [1, 0x07, 1],
+    "GTNUL": [2, 0x08, 2],
+    "GTEQL": [3, 0x09, 3]
+}
+
+ops_length = {
+    "ADD":  9,
+    "MULT": 9,
+    "COPY": 6,
+    "MOVE": 6,
+    "DONE": 0,
+    "META": 3,
+    "JMP":  3,
+    "JMPNUL": 6,
+    "JMPEQL": 9,
+    "ERR": 0,
+    "PRINT": 7,
+    "CPYBLK": 7,
+    "MOD": 9,
+    "DIV": 9,
+    "GOTO": 3,
+    "GTNUL": 6,
+    "GTEQL": 9
 }
 
 keyword_params_bytecode = {
@@ -177,10 +198,27 @@ def compile_fvcal(assembly, out_path):
 
             validate_line(number, op, params, last_number)
             last_number = int(number)
-
-            line_address_map[number] = address
-            address += ops_params_bytecode[op][0]*2 + ops_params_bytecode[op][2]
-
+            
+            pread = address
+            # Account for string literals taking up address spaces
+            if op == "PRINT" and params[0][0] == '\'':
+                address += ops_length["JMP"] + 1
+                address += len(params[0]) - 1
+                
+            #  Helps debug the assembler
+            #print("Line:", number)
+            #print("Pre-addr:", pread)
+            #print("True addr:", address)
+            #print("Op:", op)
+            #print(' ', "len:", ops_length[op] + 1, '\n')
+            
+            line_address_map[number] = address            
+            address += ops_length[op] + 1
+    
+    #  Print the line-address map
+    #  This also helps with debugging
+    #print(line_address_map)
+    
     # Code is valid, convert to machine code :)
     print("Code validated, compiling...")
     machine_code = bytearray()
@@ -231,10 +269,10 @@ def compile_fvcal(assembly, out_path):
                     expanded_bytes.append(FVCTE_table[current_letter])
 
                 # Insert a cpyblk to copy the text data into VRAM
-                expanded_bytes.append(0x0B)
-                expanded_bytes.append(0x00)
-                expanded_bytes.append(0x00)
-                expanded_bytes.append(strlen)
+                expanded_bytes.append(0x0B)    # CPYBLK
+                expanded_bytes.append(0x00)    # Direct in
+                expanded_bytes.append(0x00)    # Direct out
+                expanded_bytes.append(strlen)  # Size
 
                 # Calculate the address where the text data is stored in the binary
                 current_address = len(machine_code) + len(expanded_bytes) + 28 - strlen
