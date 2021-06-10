@@ -25,8 +25,7 @@ VM Display Specifications:
 
 # This display draws with pygame for simplicity, any library could be used
 import pygame
-
-pygame.init()
+#pygame.init()
 
 
 def display_msg(status_code, *args):
@@ -274,3 +273,4 @@ class Screen:
             quit()
 
         pygame.display.flip()
+

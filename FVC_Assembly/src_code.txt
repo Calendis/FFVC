@@ -1,0 +1,6 @@
+/ Testing program
+0  PRINT 'INPUT
+10 PRINT '§
+20 COPY  $17 #250
+30 PRINT #250
+40 DONE

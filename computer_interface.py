@@ -4,8 +4,12 @@
 """
 import os
 
-from components import bus
+from components import bus, keyboard
 from random import randint
+
+# The virtual OS uses pygame
+import pygame
+pygame.init()
 
 # Get useful values
 resolution = bus.vid.true_resolution
@@ -74,6 +78,7 @@ def power_on():
 # Eventually, I'd like to write the operating system on the machine itself
 def await_input():
     while True:
+        x = None
         x = input("? ")
 
         if x == "randimg":
@@ -122,6 +127,10 @@ def await_input():
             memcpy = bus.io(2, 0, ram_bound)
             print(*memcpy)
 
+        elif x == "showins":
+            memcpy = bus.io(2, 23, 2)
+            print(*memcpy)
+
         elif x == "showpal":
             memcpy = bus.io(2, palette_bound-8+ram_bound, 8)
             print(*memcpy)
@@ -150,6 +159,7 @@ def await_input():
         else:
             print("unknown command")
 
+        refresh_keyboard()
         refresh_display()
 
 
@@ -157,6 +167,13 @@ def refresh_display():
     #gvram = bus.io(2, ram_bound, mode_bound)
     #bus.io(1, ram_bound, gvram)
     bus.vid.refresh()
+
+def refresh_keyboard():
+    # Handle inputs using the virtual keyboard driver
+    pygame_events = pygame.event.get()
+    for e in pygame_events:
+        if e.type == pygame.KEYDOWN:
+            keyboard.parse_keys(e)
 
 
 power_on()
