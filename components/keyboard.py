@@ -2,7 +2,7 @@ from components import bus
 
 '''
     Virtual keyboard driver for FFVC
-    Just a pygame loop that writes a byte to reserved mem addrs 23, 24
+    Keyboard writes a byte to reserved mem addrs 23 and 24
 
     Byte format:
     --------------------------------------
@@ -128,8 +128,12 @@ ascii_to_ffvcte = {
 
 }
 
+global i
+i = 0
+
 def parse_keys(x):
     #print(x)
+    global i
     pygame_key = x.dict
 
     shift = pygame_key["mod"]
@@ -138,10 +142,20 @@ def parse_keys(x):
     # We must convert from ASCII (used by pygame)...
     # ... to FFVC's custom encoding
     try:
-        keycode = ascii_to_ffvcte[ascii]
+        keycode = ascii_to_ffvcte[ascii]  # +shift*-32 would implement shift but I want to use the bitfield
 
     except KeyError:
         print("Keyboard driver: unsupported input!")
         return
 
+    # A key was pressed, set the delta
+    bitfield_delta = 0b000000100
+
+    # Set the VRAM insert pointer
+    bus.io(1, 9, i)
+
+    i += 1
+
+    last_input = bus.io(0, 23, 1)
     bus.io(1, 23, keycode)  # Addr 23 is the first input byte
+    bus.io(1, 24, bitfield_delta)

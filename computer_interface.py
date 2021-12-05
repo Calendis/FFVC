@@ -70,6 +70,14 @@ def power_on():
     # Play test sound
     pass
 
+    # Load font
+    font = open("files/font2.bgt", 'rb').read()
+    bus.io(1, 532, font)
+
+    # Enter text mode
+    newmode = 1
+    bus.io(1, ram_bound + palette_bound, newmode.to_bytes(1, "little"))
+
     # Start the operating system
     await_input()
 
@@ -157,7 +165,8 @@ def await_input():
             quit()
 
         else:
-            print("unknown command")
+            pass
+            #print("unknown command")
 
         refresh_keyboard()
         refresh_display()

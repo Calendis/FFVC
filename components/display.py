@@ -180,6 +180,18 @@ class Screen:
             # Ensure the fontmap always contains a null glyph for fallback
             fontmap[0x00] = bytes(8)
 
+            # If the delta is set, copy keyboard input to vram at the insert pointer
+            delta_set = bus.io(0, 24, 1)
+
+            if delta_set == 0b00000100:
+                insert_pointer = bus.io(0, 9, 3)
+                keyboard_in = bus.io(0, 23, 1)
+                print("ip:", insert_pointer, "ki:", keyboard_in)
+                bus.io(1, 25000+ insert_pointer, keyboard_in)
+
+                # Reset the delta
+                bus.io(1, 24, 0)
+
             # Get text from VRAM
             text_data = bus.io(2, 1000 + self.colour_bound, 4000)
 
@@ -187,7 +199,8 @@ class Screen:
             chars_per_line = self.true_resolution[0] // 8
             chars_per_column = self.true_resolution[1] // 8
 
-            #x = 0
+            self.x = 0
+            self.line = 0
             # Iterate over each character ID
             for c in text_data:
                 # Catch control characters
@@ -273,4 +286,3 @@ class Screen:
             quit()
 
         pygame.display.flip()
-

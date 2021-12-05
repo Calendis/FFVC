@@ -8,7 +8,7 @@ from math import ceil
     ----------------------------------------------
     0 to 3     | 0:4    | block size
     4 to 8     | 4:9    | earliest writeable address
-    9 to 11    | 9:12   | free
+    9 to 11    | 9:12   | Relative VRAM insert pointer
     12 to 21   | 12:22  | free
     23 to 24   | 23:25  | input
     26 to 31   | 26:32  | free
@@ -112,7 +112,7 @@ class MemBlock:
         return not (bool.from_bytes(self.data[4:5], "little"))
 
     def get_write_bound(self):
-        return int.from_bytes(self.data[5:10], "little")
+        return int.from_bytes(self.data[4:9], "little")
 
     def set_write_bound(self, loc):
-        self.data[5:10] = loc.to_bytes(4, "little")
+        self.data[4:9] = loc.to_bytes(4, "little")
